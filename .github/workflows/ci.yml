@@ -82,7 +82,7 @@ jobs:
 
       # Build only (no push) so a broken Dockerfile is caught before merge, not on main.
       - name: Build image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: false
