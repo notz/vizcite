@@ -1,0 +1,21 @@
+{
+  "name": "vizcite",
+  "owner": {
+    "name": "Vizcite"
+  },
+  "description": "Vizcite's Claude Code plugin marketplace (self-hosted AI visibility & SEO).",
+  "plugins": [
+    {
+      "name": "vizcite",
+      "source": "./plugins/vizcite",
+      "description": "AI visibility (GEO) and SEO data for your agent: how ChatGPT, Perplexity and Google AI answer about your brand, plus keyword research, SERPs, backlinks, rank tracking, local SEO and site audits — from your self-hosted Vizcite.",
+      "category": "SEO",
+      "tags": [
+        "seo",
+        "geo",
+        "ai-visibility",
+        "mcp"
+      ]
+    }
+  ]
+}

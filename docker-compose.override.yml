@@ -1,0 +1,6 @@
+# Local convenience: `docker compose up` merges this file automatically and publishes the app on
+# http://localhost:3000. The override is only for local use.
+services:
+  app:
+    ports:
+      - "${APP_PORT:-3000}:3000"
