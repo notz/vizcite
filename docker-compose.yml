@@ -1,0 +1,50 @@
+# Vizcite — Docker Compose (builds from source).
+# Only DOMAIN is configurable via .env; everything else is configured in the admin panel.
+# Self-hosting without building from source? See deploy/docker-compose.yml — same shape, but pulls the
+# prebuilt image from GHCR (no build step) and bundles a Caddy reverse proxy. Guide: docs/SELF_HOSTING.md.
+name: vizcite
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        SOURCE_COMMIT: ${SOURCE_COMMIT:-}
+    restart: unless-stopped
+    environment:
+      - DOMAIN=${DOMAIN:-}
+      - DATABASE_URL=postgres://vizcite:${POSTGRES_PASSWORD:-vizcite-local-only}@postgres:5432/vizcite
+      - DATA_DIR=/data
+      # Key for encrypting stored secrets. Required (see .env.example); installs from before this existed
+      # keep using /data/secret.key while it is empty.
+      - APP_SECRET=${APP_SECRET:-}
+    volumes:
+      - vizcite-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=vizcite
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-vizcite-local-only}
+      - POSTGRES_DB=vizcite
+    volumes:
+      - vizcite-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vizcite -d vizcite"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  vizcite-data:
+  vizcite-pg:

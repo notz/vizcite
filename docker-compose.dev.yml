@@ -1,0 +1,8 @@
+# Local dev: Postgres only, published on :54329. Usage: pnpm db:up, then pnpm db:push && pnpm dev; pnpm db:down stops it (data is kept).
+# Credentials match the default DATABASE_URL (postgres://vizcite:vizcite@localhost:54329/vizcite).
+services:
+  postgres:
+    environment:
+      - POSTGRES_PASSWORD=vizcite
+    ports:
+      - "54329:5432"
