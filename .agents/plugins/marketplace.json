@@ -1,0 +1,12 @@
+{
+  "name": "vizcite",
+  "interface": { "displayName": "Vizcite" },
+  "plugins": [
+    {
+      "name": "vizcite",
+      "source": { "source": "local", "path": "./plugins/vizcite" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "category": "Productivity"
+    }
+  ]
+}

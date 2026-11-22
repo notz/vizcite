@@ -1,0 +1,22 @@
+{
+  "name": "vizcite",
+  "displayName": "Vizcite",
+  "version": "1.0.0",
+  "description": "AI visibility (GEO) and SEO data for your agent: how ChatGPT, Perplexity and Google AI answer about your brand, plus keyword research, SERPs, backlinks, rank tracking, local SEO and site audits — from your self-hosted Vizcite.",
+  "author": { "name": "Vizcite" },
+  "keywords": ["seo", "geo", "ai-visibility", "keyword-research", "serp", "site-audit", "backlinks", "search-console", "rank-tracking", "local-seo"],
+  "userConfig": {
+    "vizcite_url": {
+      "type": "string",
+      "title": "Vizcite URL",
+      "description": "Base URL of your Vizcite instance, e.g. https://seo.example.com (no trailing slash). The plugin connects to <URL>/api/mcp and signs in with OAuth.",
+      "required": true
+    }
+  },
+  "mcpServers": {
+    "vizcite": {
+      "type": "http",
+      "url": "${user_config.vizcite_url}/api/mcp"
+    }
+  }
+}

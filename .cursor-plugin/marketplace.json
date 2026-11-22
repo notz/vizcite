@@ -1,0 +1,16 @@
+{
+  "name": "vizcite",
+  "owner": {
+    "name": "Vizcite"
+  },
+  "metadata": {
+    "description": "Vizcite's Cursor plugin marketplace."
+  },
+  "plugins": [
+    {
+      "name": "vizcite",
+      "source": "plugins/vizcite",
+      "description": "AI visibility (GEO) and SEO data for your agent: how ChatGPT, Perplexity and Google AI answer about your brand, plus keyword research, SERPs, backlinks, rank tracking, local SEO and site audits \u2014 from your self-hosted Vizcite."
+    }
+  ]
+}

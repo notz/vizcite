@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: app
+    runs-on: ubuntu-24.04
+    # Integration tests run against a real database (same defaults as the dev setup in CONTRIBUTING.md).
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: vizcite
+          POSTGRES_PASSWORD: vizcite
+          POSTGRES_DB: vizcite
+        ports:
+          - 54329:5432
+        options: >-
+          --health-cmd "pg_isready -U vizcite -d vizcite"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgres://vizcite:vizcite@localhost:54329/vizcite
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm (version from packageManager in package.json)
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # next typegen && tsc --noEmit
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      # Fails when src/server/db/schema/ changed without a committed migration.
+      - name: Check migrations are up to date
+        run: |
+          pnpm db:generate
+          git add -N drizzle
+          git diff --exit-code drizzle
+
+      - name: Build
+        run: pnpm build
+
+      - name: Create database schema
+        run: pnpm db:push
+
+      - name: Test
+        run: pnpm test
+
+  docker:
+    name: docker build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Build only (no push) so a broken Dockerfile is caught before merge, not on main.
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
