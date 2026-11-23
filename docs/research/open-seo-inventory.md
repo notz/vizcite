@@ -539,7 +539,7 @@ serpAnalysisSchema = z.object({
 | Location-name validation (tracker save) | `POST https://sandbox.dataforseo.com/v3/serp/google/organic/live/advanced` (free sandbox) | `[{keyword: "pizza", location_name, language_code, depth: 10}]` | `tasks[0].{status_code, status_message}` |
 | Account usage (maintainer script only) | `GET /v3/appendix/user_data` (free) | — | `result[0].money.{total, balance, statistics.day, statistics.minute}` |
 
-Endpoints defined in the same client but belonging to other areas (documented by their sections): `/v3/dataforseo_labs/google/{domain_rank_overview, ranked_keywords, relevant_pages, serp_competitors}/live` (domain overview / MCP `find_serp_competitors` with `item_types` default `["organic","local_pack"]`, limit 50), `/v3/serp/google/organic/task_post` + `/v3/serp/google/organic/task_get/advanced/{id}` + live `rankCheck` with `stop_crawl_on_match` (rank tracking), `/v3/serp/google/maps/live/advanced`, `/v3/serp/google/local_finder/live/advanced` and `business_data/*` (local SEO), `backlinks/*`, `ai_optimization/*`, Lighthouse (`on_page`).
+Endpoints defined in the same client but belonging to other areas (documented by their sections): `/v3/dataforseo_labs/google/{domain_rank_overview, ranked_keywords, relevant_pages, serp_competitors}/live` (domain overview / MCP `find_serp_competitors` with `item_types` default `["organic","local_pack"]`, limit 50), `/v3/serp/google/organic/task_post` + `/v3/serp/google/organic/task_get/advanced/{id}` + live `rankCheck` (rank tracking), `/v3/serp/google/maps/live/advanced`, `/v3/serp/google/local_finder/live/advanced` and `business_data/*` (local SEO), `backlinks/*`, `ai_optimization/*`, Lighthouse (`on_page`).
 
 ---
 
@@ -1183,8 +1183,7 @@ Live: `POST /v3/serp/google/organic/live/advanced` payload per task:
 [{ "keyword": "...", "location_code": 2840 | "location_name": "City,Region,Country",
    "language_code": "en", "device": "desktop|mobile", "os": "windows|android",
    "depth": 10..100,
-   "stop_crawl_on_match": [{ "match_value": "<domain>", "match_type": "with_subdomains" }],
-   "find_targets_in": ["organic"] }]
+   "resolve_poisoned_results": true, "resolve_goto_urls": true }]
 ```
 Queued: `POST /v3/serp/google/organic/task_post` (array of ≤100 tasks, same fields + `tag: "<keywordId>:<device>"` to map back); accepted entries have status `20100`; cost summed over all entries. Collect: `GET /v3/serp/google/organic/task_get/advanced/{taskId}` (free; in-progress → pending; "No Search Results" 40501 → completed with empty result).
 
@@ -1942,7 +1941,7 @@ Agent skill `local-seo` (`.agents/skills/local-seo/SKILL.md`): workflow find bus
 
 | Feature | Exact path | Payload fields sent | Response fields used |
 |---|---|---|---|
-| Rank check (manual, live; also queued fallback) | `POST /v3/serp/google/organic/live/advanced` | `keyword, location_code` **or** `location_name, language_code, device, os (windows/android), depth (10–100), stop_crawl_on_match:[{match_value:domain, match_type:"with_subdomains"}], find_targets_in:["organic"]` | `items[].type, domain, rank_group, rank_absolute, url`; status 40501 = empty |
+| Rank check (manual, live; also queued fallback) | `POST /v3/serp/google/organic/live/advanced` | `keyword, location_code` **or** `location_name, language_code, device, os (windows/android), depth (10–100), resolve_poisoned_results:true, resolve_goto_urls:true` | `items[].type, domain, rank_group, rank_absolute, url`; status 40501 = empty |
 | Rank check (scheduled) post | `POST /v3/serp/google/organic/task_post` | array ≤100 of above + `tag:"<kwId>:<device>"` | `tasks[].id, status_code (20100), cost, data.tag` |
 | Rank check collect | `GET /v3/serp/google/organic/task_get/advanced/{id}` | — (free, unmetered) | same items as live |
 | SERP location registry | `GET /v3/serp/google/locations/{iso2}` | — (free) | `location_code, location_name, location_type` |
