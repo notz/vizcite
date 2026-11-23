@@ -69,6 +69,8 @@ export function buildSerpAnalysisTask(input: { keyword: string; locationCode: nu
     device: "desktop",
     os: "windows",
     depth: clampSerpDepth(input.depth ?? SERP_ANALYSIS_DEPTH),
+    // Live tasks don't resolve Google goto redirects unless asked.
+    resolve_goto_urls: true,
   };
 }
 

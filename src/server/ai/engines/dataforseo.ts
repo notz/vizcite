@@ -387,6 +387,7 @@ async function serpAi(req: AnswerRequest, kind: "ai_overview" | "ai_mode" | "cop
   if (kind === "ai_overview") {
     body.load_async_ai_overview = true;
     body.depth = 10;
+    body.resolve_goto_urls = true; // live Google organic: resolve goto redirects to final URLs
   }
   if (kind === "copilot") body.depth = 10;
   const task = await dfsPost<Record<string, unknown>>(path, [body], dfsCtx(req), { timeoutMs: 150_000, estimatedCostUsd: 0.006 });

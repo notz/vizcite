@@ -292,6 +292,7 @@ describe("SERP + rank checks", () => {
       device: "desktop",
       os: "windows",
       depth: 10,
+      resolve_goto_urls: true,
     });
     expect(
       buildRankCheckTask({ keyword: "k", locationCode: 2840, languageCode: "en", locationName: "Enid,Oklahoma,United States", device: "mobile", targetDomain: "example.com", depth: 40 }),

@@ -117,7 +117,7 @@ describe("getSerpAnalysis", () => {
     responder = () =>
       Response.json({ status_code: 20000, status_message: "Ok.", cost: 0.002, tasks: [{ id: "t", status_code: 40501, status_message: "No Search Results.", cost: 0.002, result: null }] });
     const res = await getSerpAnalysis(ctx, { keyword: "Obscure Query" });
-    expect(calls[0]!.body).toEqual([{ keyword: "obscure query", location_code: 2276, language_code: "de", device: "desktop", os: "windows", depth: 20 }]);
+    expect(calls[0]!.body).toEqual([{ keyword: "obscure query", location_code: 2276, language_code: "de", device: "desktop", os: "windows", depth: 20, resolve_goto_urls: true }]);
     expect(res.items).toEqual([]);
     expect(res.reason).toBe("no_organic_results");
   });
