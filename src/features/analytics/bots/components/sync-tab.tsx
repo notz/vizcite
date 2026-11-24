@@ -13,6 +13,7 @@ import { IntegrationLogo } from "@/features/integrations/components/integration-
 import { disconnectIntegrationAction, issueIngestTokenAction } from "@/features/integrations/actions";
 import { refreshIpRangesAction } from "../actions";
 import { cn } from "@/lib/utils";
+import { BOT_UA_PATTERN } from "@/server/analytics/bots/bot-classifier";
 import type { ConnectorStatus } from "@/server/analytics/bots/queries";
 import type { CloudflareDeployment } from "@/server/analytics/bots/cloudflare-deploy";
 import { CloudflareDeployCard } from "./cloudflare-deploy";
@@ -261,31 +262,66 @@ log_format vizcite escape=json '{"timestamp":"$time_iso8601","ip":"$remote_addr"
   '"bytes":$body_bytes_sent,"user_agent":"$http_user_agent"}';
 access_log /var/log/nginx/vizcite.ndjson vizcite;`;
 
-  const vector = `# vector.toml — forwards only AI-crawler requests
+  const vector = `# vector.toml — forwards only AI-crawler requests, only the fields Vizcite needs
 [sources.nginx]
 type = "file"
 include = ["/var/log/nginx/vizcite.ndjson"]
 
+# 1. Drop everything that is not an AI crawler (human traffic never leaves this host)
 [transforms.bots]
-type = "filter"
+type = "remap"
 inputs = ["nginx"]
-condition = 'match(string!(parse_json!(.message).user_agent), r'(?i)gptbot|chatgpt-user|oai-searchbot|claude|perplexity|google|bingbot|applebot|bytespider|ccbot|meta-externalagent')'
+source = """
+. = parse_json!(.message)
+if !match(string(.user_agent) ?? "", r'(?i)${BOT_UA_PATTERN}') { abort }
+"""
+drop_on_abort = true
+
+# 2. Whitelist fields. Vizcite uses "ip" only to verify the crawler and never stores it;
+#    add  del(.ip)  here to not even send it (hits then stay unverified).
+[transforms.slim]
+type = "remap"
+inputs = ["bots"]
+source = """
+. = {"timestamp": .timestamp, "ip": .ip, "method": .method, "host": .host,
+     "path": .path, "status": .status, "bytes": .bytes, "user_agent": .user_agent}
+"""
 
 [sinks.vizcite]
 type = "http"
-inputs = ["bots"]
+inputs = ["slim"]
 uri = "${endpoint}"
-encoding.codec = "text"
+encoding.codec = "json"
 framing.method = "newline_delimited"
 compression = "gzip"
 request.headers.Authorization = "Bearer ${tok("server_logs")}"
 batch.max_events = 5000`;
 
-  const fluentBit = `# fluent-bit.conf
+  const fluentBit = `# fluent-bit.conf — forwards only AI-crawler requests, only the fields Vizcite needs
 [INPUT]
     Name   tail
     Path   /var/log/nginx/vizcite.ndjson
     Parser json
+
+# 1. Keep only AI-crawler requests (human traffic never leaves this host)
+[FILTER]
+    Name   grep
+    Match  *
+    Regex  user_agent (?i)${BOT_UA_PATTERN}
+
+# 2. Whitelist fields. Vizcite uses "ip" only to verify the crawler and never stores it;
+#    remove "ip" below to not even send it (hits then stay unverified).
+[FILTER]
+    Name           record_modifier
+    Match          *
+    Whitelist_key  timestamp
+    Whitelist_key  ip
+    Whitelist_key  method
+    Whitelist_key  host
+    Whitelist_key  path
+    Whitelist_key  status
+    Whitelist_key  bytes
+    Whitelist_key  user_agent
 
 [OUTPUT]
     Name        http
@@ -294,6 +330,7 @@ batch.max_events = 5000`;
     Port        ${appUrl.startsWith("https") ? 443 : (appUrl.split(":")[2] ?? 80)}
     URI         /api/webhooks/server-logs
     Format      json_lines
+    Compress    gzip
     Header      Authorization Bearer ${tok("server_logs")}
     tls         ${appUrl.startsWith("https") ? "On" : "Off"}`;
 
@@ -406,7 +443,7 @@ npx wrangler secret put VIZCITE_TOKEN --name vizcite-bot-logger
                     ["timestamp", "ISO 8601 or unix s/ms", "required"],
                     ["user_agent", "Request User-Agent", "required"],
                     ["path", "Path + query (or full URL)", "required"],
-                    ["ip", "Client IP (enables verification)", "recommended"],
+                    ["ip", "Client IP (verifies the crawler; never stored)", "recommended"],
                     ["status", "HTTP status code", "recommended"],
                     ["method, host, bytes", "Optional", ""],
                   ].map(([f, d, r]) => (
@@ -422,7 +459,7 @@ npx wrangler secret put VIZCITE_TOKEN --name vizcite-bot-logger
             <ul className="list-disc space-y-1 pl-4 text-xs text-muted-foreground">
               <li>Auth: <code>Authorization: Bearer fslg_…</code> · gzip bodies are detected automatically.</li>
               <li>Limits: 16 MB and 20 000 lines per request, 1 200 requests/min per token.</li>
-              <li>Cloudflare Logpush and Akamai field names are accepted too; non-bot lines are ignored.</li>
+              <li>Cloudflare Logpush and Akamai field names are accepted too; non-bot lines are ignored (the Vector / Fluent Bit configs already filter them before sending).</li>
               <li>Duplicates (same bot, timestamp, IP and path) are skipped. Response: <code>{"{success, received, botVisits, saved}"}</code>.</li>
             </ul>
           </div>

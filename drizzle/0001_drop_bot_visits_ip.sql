@@ -1,0 +1,1 @@
+ALTER TABLE "analytics_bot_visits" DROP COLUMN "ip";

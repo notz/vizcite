@@ -350,7 +350,6 @@ function buildBots(ctx: DemoModuleCtx, uploadId: string) {
         bot: bot.token,
         company: companyOf.get(bot.token) ?? bot.company,
         ts,
-        ip,
         host: ctx.domain,
         path,
         method: bot.token === "OAI-SearchBot" && rng.bool(0.15) ? "HEAD" : "GET",

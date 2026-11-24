@@ -75,6 +75,7 @@ async function readBody(req: Request): Promise<Buffer | "too_large"> {
  * NDJSON ingest for AI-crawler requests (server logs, Cloudflare Worker/Logpush, Akamai DataStream 2).
  * Auth: `Authorization: Bearer fslg_…` (per project & connector). Limits: 16 MB body, 20 000 lines.
  * Response: `{ success, received, botVisits, saved }`.
+ * Privacy: non-bot lines are discarded; the IP is used only to verify the crawler against the operator's published ranges and is never stored.
  */
 export async function POST(req: Request) {
   // Unauthenticated / bad-token attempts are throttled per client IP before touching the database.

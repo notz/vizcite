@@ -18,7 +18,7 @@ export function dedupeKey(bot: string, ts: Date, ip: string | null, path: string
 
 /**
  * Identifies bot requests among parsed hits, verifies their IPs and stores them (deduplicated on
- * bot + timestamp + IP + path). Non-bot hits are discarded.
+ * bot + timestamp + IP + path; the IP is used for verification only and never persisted). Non-bot hits are discarded.
  */
 export async function ingestHits(
   projectId: string,
@@ -38,19 +38,19 @@ export async function ingestHits(
     if (!Number.isFinite(t) || t > now + 24 * 3600_000 || t < 946_684_800_000) continue;
     const ip = h.ip && h.ip.length <= 64 ? h.ip : null;
     const path = h.path.slice(0, 2048);
+    const verified = verify(bot.token, ip);
     rows.push({
       projectId,
       bot: bot.token,
       company: bot.company,
       ts: h.ts,
-      ip,
       host: h.host?.slice(0, 255) ?? null,
       path,
       method: h.method?.slice(0, 16) ?? null,
       status: h.status != null && h.status >= 100 && h.status <= 599 ? h.status : null,
       userAgent: h.userAgent.slice(0, 1000),
       bytes: h.bytes != null && h.bytes >= 0 ? h.bytes : null,
-      verified: verify(bot.token, ip),
+      verified,
       source,
       uploadId: opts.uploadId ?? null,
       dedupeKey: dedupeKey(bot.token, h.ts, ip, path),

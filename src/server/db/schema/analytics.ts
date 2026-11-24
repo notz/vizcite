@@ -196,7 +196,6 @@ export const botVisits = pgTable(
     bot: text().notNull(),
     company: text(),
     ts: ts().notNull(),
-    ip: text(),
     host: text(),
     path: text().notNull(),
     method: text(),
@@ -209,7 +208,7 @@ export const botVisits = pgTable(
       .notNull()
       .default("api"),
     uploadId: text(),
-    /** sha1(bot|timestamp|ip|path) */
+    /** sha1(bot|timestamp|ip|path); the IP itself is never stored */
     dedupeKey: text().notNull(),
     createdAt: createdAt(),
   },
