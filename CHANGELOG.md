@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.0](https://github.com/notz/vizcite/compare/v0.1.1...v0.2.0) (2026-11-24)
+
+
+### Features
+
+* **analytics:** never store crawler IPs; filter bots in Vector/Fluent ([#14](https://github.com/notz/vizcite/issues/14)) ([3cab178](https://github.com/notz/vizcite/commit/3cab1787aa1cb600fb403b9af0cae45337832d4c))
+
+
+### Documentation
+
+* cleanup references ([ad24714](https://github.com/notz/vizcite/commit/ad247149db2334e2993a077040a32531eac9c452))
+
 ## [0.1.1](https://github.com/notz/vizcite/compare/v0.1.0...v0.1.1) (2026-11-23)
 
 
