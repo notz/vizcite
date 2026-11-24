@@ -8,7 +8,7 @@ import { corsPreflight } from "@/server/api/urls";
 /**
  * GET /api/v1/projects/{projectId}/metrics — PeriodMetrics for today and yesterday plus the
  * selected timeframe (default 30d) vs the previous period of equal length, with changes.
- * `/metrics/daily` is an alias (finseo naming).
+ * `/metrics/daily` is an alias.
  */
 export const GET = apiRoute<ProjectParams>({ scope: "read" }, async ({ principal, params, url }) => {
   const project = await getApiProject(principal, params.projectId);

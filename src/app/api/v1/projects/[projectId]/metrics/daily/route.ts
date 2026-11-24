@@ -5,7 +5,7 @@ import { FILTER_ARRAY_KEYS, toAiFilter, type ProjectParams } from "@/server/api/
 import { filterOnlyQuery } from "@/server/api/schemas";
 import { corsPreflight } from "@/server/api/urls";
 
-/** GET /api/v1/projects/{projectId}/metrics/daily — alias of /metrics (finseo endpoint name). */
+/** GET /api/v1/projects/{projectId}/metrics/daily — alias of /metrics. */
 export const GET = apiRoute<ProjectParams>({ scope: "read" }, async ({ principal, params, url }) => {
   const project = await getApiProject(principal, params.projectId);
   const q = parseQuery(url, filterOnlyQuery, FILTER_ARRAY_KEYS);

@@ -422,7 +422,7 @@ export const OPERATIONS: OpenApiOperation[] = [
     path: "/projects/{projectId}/metrics/daily",
     operationId: "getMetricsDaily",
     summary: "Visibility metrics (daily)",
-    description: "Alias of /metrics (finseo endpoint name): today vs yesterday plus the selected timeframe vs the previous period.",
+    description: "Alias of /metrics: today vs yesterday plus the selected timeframe vs the previous period.",
     tag: "Metrics",
     scope: "read",
     query: filterOnlyQuery,

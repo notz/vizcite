@@ -1,7 +1,6 @@
 # Vizcite — Architecture & Conventions
 
-Open-source, self-hosted AI-visibility (GEO/AEO) + classic SEO platform. Feature parity target:
-finseo.ai (see `docs/research/finseo-features.md`) + every-app/open-seo (see `docs/research/open-seo-inventory.md`),
+Open-source, self-hosted AI-visibility (GEO/AEO) + classic SEO platform. Feature parity target: every-app/open-seo (see `docs/research/open-seo-inventory.md`),
 plus a local CLI agent system (Claude Code / Codex) that powers all AI features (API-key fallback).
 
 ## Stack

@@ -8,7 +8,6 @@ Evidence for each requirement of the project brief, gathered on 2026-09-26 again
 
 | Requirement | Evidence |
 |---|---|
-| Every finseo.ai page/tab/action | `docs/research/finseo-features.md` inventory; coverage audit of ~535 items (finseo + open-seo) found 9 gaps, all closed; independent re-audit: 26/26 PASS with file:line evidence |
 | All open-seo features (`every-app/open-seo`) | `docs/research/open-seo-inventory.md` §1–§25; closed gaps: GSC URL Inspection, GA4 MCP tools (9), multi-account Google OAuth, 11 open-seo agent skills (+6 own), Claude Code / Codex / Cursor plugin manifests + served marketplace, GDPR export & erasure, billing & cost estimator, 8 free SEO tools (in-app + optional public), export to Google Sheets |
 | Next.js / shadcn / Tailwind, latest | Next 16.3.6 (Turbopack, `proxy.ts`), React 19.3, Tailwind 4.3, shadcn 4.21 |
 | Only `DOMAIN` in `.env` | `.env.example` contains exactly `DOMAIN=…`; everything else lives in Admin (settings registry, AES-256-GCM for secrets) |

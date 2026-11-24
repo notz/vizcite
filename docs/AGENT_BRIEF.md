@@ -11,8 +11,7 @@ plus a local CLI agent system (Claude Code / Codex).
    before using an API you are unsure about (e.g. `proxy.ts` instead of middleware, async `params`/`searchParams`/
    `cookies()`/`headers()`, `PageProps<"/route">`/`LayoutProps`/`RouteContext` global type helpers,
    `revalidateTag(tag, "max")`, `updateTag`, `refresh()`).
-3. Research: `docs/research/finseo-features.md` (exact finseo UI/behaviour, captured from the live app) and
-   `docs/research/open-seo-inventory.md` (exhaustive open-seo spec incl. DataForSEO endpoints, payloads, formulas).
+3. Research: `docs/research/open-seo-inventory.md` (exhaustive open-seo spec incl. DataForSEO endpoints, payloads, formulas).
 4. Look at existing code in `src/components/app/*`, `src/server/*` before writing new helpers.
 
 ## Hard rules

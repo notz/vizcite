@@ -5,7 +5,7 @@ import { FILTER_ARRAY_KEYS, paginate, toAiFilter, type ProjectParams } from "@/s
 import { competitorsQuery } from "@/server/api/schemas";
 import { corsPreflight } from "@/server/api/urls";
 
-/** GET /api/v1/projects/{projectId}/competitors/ranking — alias of /competitors (finseo endpoint name). */
+/** GET /api/v1/projects/{projectId}/competitors/ranking — alias of /competitors. */
 export const GET = apiRoute<ProjectParams>({ scope: "read" }, async ({ principal, params, url }) => {
   const project = await getApiProject(principal, params.projectId);
   const q = parseQuery(url, competitorsQuery, FILTER_ARRAY_KEYS);

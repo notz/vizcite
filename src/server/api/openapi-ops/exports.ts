@@ -81,14 +81,14 @@ export const EXPORT_DESCRIPTION = [
   "`since` (ISO timestamp or YYYY-MM-DD) returns only rows of answers stored at or after that instant (prompts: created or run since), ordered oldest first for stable paging. Without timeframe/startDate the period starts at that day and answers of earlier days that were stored later are included; with an explicit period both filters apply. Store `highWaterMark` and pass it as the next `since` (rows at exactly that instant are returned again — de-duplicate by id).",
 ].join("\n\n");
 
-/** REST v1 operations: REST aliases (finseo endpoint names) and bulk export datasets. `/metrics/daily` is documented in openapi.ts. */
+/** REST v1 operations: REST aliases and bulk export datasets. `/metrics/daily` is documented in openapi.ts. */
 export const exportsOperations: OpenApiOperation[] = [
   {
     method: "get",
     path: "/projects/{projectId}/competitors/ranking",
     operationId: "getCompetitorRanking",
     summary: "Competitor ranking (alias)",
-    description: "Alias of `GET /projects/{projectId}/competitors` (finseo endpoint name): your brand and competitors ranked by a metric, with changes vs the previous period.",
+    description: "Alias of `GET /projects/{projectId}/competitors`: your brand and competitors ranked by a metric, with changes vs the previous period.",
     tag: "Competitors",
     scope: "read",
     query: competitorsQuery,
@@ -100,7 +100,7 @@ export const exportsOperations: OpenApiOperation[] = [
     path: "/projects/{projectId}/sources/ranking",
     operationId: "getSourceRanking",
     summary: "Cited sources ranking (alias)",
-    description: "Alias of `GET /projects/{projectId}/sources` (finseo endpoint name): pages or domains cited in AI answers, ranked by citations.",
+    description: "Alias of `GET /projects/{projectId}/sources`: pages or domains cited in AI answers, ranked by citations.",
     tag: "Sources",
     scope: "read",
     query: sourcesQuery,
@@ -112,7 +112,7 @@ export const exportsOperations: OpenApiOperation[] = [
     path: "/projects/{projectId}/export/bulk",
     operationId: "exportProjectBulk",
     summary: "Bulk export (alias)",
-    description: `Alias of \`GET /projects/{projectId}/export\` (finseo endpoint name).\n\n${EXPORT_DESCRIPTION}`,
+    description: `Alias of \`GET /projects/{projectId}/export\`.\n\n${EXPORT_DESCRIPTION}`,
     tag: "Export",
     scope: "export",
     permission: "data.export",
