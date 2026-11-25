@@ -11,7 +11,9 @@
 #   --max-parallel <n>     Parallel jobs on this machine (default: server setting)
 #   --no-auto-update       Never self-update (update by re-running this installer)
 #   --no-autostart         Don't register launchd/systemd autostart (start it yourself)
-#   --dir <dir>            Install directory (default: ~/.vizcite-agent)
+#   --dir <dir>            Install directory (default: ~/.vizcite-agent[-<id>])
+#   --id <suffix>          Run several agents on one machine: appends the suffix to the install dir,
+#                          autostart name and default work directory (use with --uninstall too)
 #   --uninstall            Stop the agent and remove it from this machine
 #
 # Local security policy (only you decide — the dashboard can never widen it):
@@ -36,7 +38,8 @@ MAX_PARALLEL=""
 NO_AUTO_UPDATE=0
 NO_AUTOSTART=0
 UNINSTALL=0
-INSTALL_DIR="${VIZCITE_AGENT_HOME:-$HOME/.vizcite-agent}"
+INSTALL_DIR="${VIZCITE_AGENT_HOME:-}"
+ID=""
 LABEL="com.vizcite.agent"
 UNIT="vizcite-agent"
 
@@ -66,13 +69,24 @@ while [ $# -gt 0 ]; do
     --allow-remote-workdir) ALLOW_REMOTE_WORKDIR=1; shift ;;
     --dir) INSTALL_DIR="${2:-}"; shift 2 ;;
     --dir=*) INSTALL_DIR="${1#*=}"; shift ;;
+    --id) ID="${2:-}"; shift 2 ;;
+    --id=*) ID="${1#*=}"; shift ;;
     --uninstall) UNINSTALL=1; shift ;;
-    -h|--help) sed -n '2,20p' "$0" 2>/dev/null || true; exit 0 ;;
+    -h|--help) sed -n '2,22p' "$0" 2>/dev/null || true; exit 0 ;;
     *) die "Unknown option: $1" ;;
   esac
 done
 
 HOST="${HOST%/}"
+SUFFIX=""
+if [ -n "$ID" ]; then
+  case "$ID" in *[!A-Za-z0-9_-]*) die "--id may only contain letters, digits, - and _" ;; esac
+  SUFFIX="-$ID"
+  LABEL="$LABEL.$ID"
+fi
+UNIT="$UNIT$SUFFIX"
+INSTALL_DIR="${INSTALL_DIR:-$HOME/.vizcite-agent$SUFFIX}"
+[ -z "$ID" ] || [ -n "$WORKDIR" ] || WORKDIR="${TMPDIR:-/tmp}/vizcite-agent$SUFFIX"
 OS="$(uname -s)"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 UNIT_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/$UNIT.service"
@@ -88,8 +102,8 @@ stop_autostart() {
       if command -v systemctl >/dev/null 2>&1 && [ -f "$UNIT_FILE" ]; then
         systemctl --user disable --now "$UNIT" >/dev/null 2>&1 || true
       fi
-      if command -v crontab >/dev/null 2>&1 && crontab -l 2>/dev/null | grep -q "vizcite-agent"; then
-        crontab -l 2>/dev/null | grep -v "vizcite-agent" | crontab - || true
+      if command -v crontab >/dev/null 2>&1 && crontab -l 2>/dev/null | grep -q "# $UNIT\$"; then
+        crontab -l 2>/dev/null | grep -v "# $UNIT\$" | crontab - || true
       fi
       ;;
   esac
@@ -304,7 +318,7 @@ UNITFILE
     fi
     ;;
   cron)
-    ( crontab -l 2>/dev/null | grep -v "vizcite-agent"; echo "@reboot /bin/bash $INSTALL_DIR/run.sh >> $INSTALL_DIR/logs/launchd.log 2>&1 # vizcite-agent" ) | crontab -
+    ( crontab -l 2>/dev/null | grep -v "# $UNIT\$"; echo "@reboot /bin/bash $INSTALL_DIR/run.sh >> $INSTALL_DIR/logs/launchd.log 2>&1 # $UNIT" ) | crontab -
     nohup /bin/bash "$INSTALL_DIR/run.sh" >> "$INSTALL_DIR/logs/launchd.log" 2>&1 &
     info "Autostart: crontab @reboot (systemd user session not available)"
     ;;
@@ -318,4 +332,4 @@ echo
 printf '%s✓ Vizcite agent %s installed.%s It shows up as online in your dashboard within a few seconds.\n' "$green$bold" "${VERSION:-}" "$reset"
 printf '  Logs:      tail -f %s/logs/agent.log\n' "$INSTALL_DIR"
 printf '  Status:    %s %s/agent.mjs status\n' "$NODE" "$INSTALL_DIR"
-printf '  Uninstall: curl -fsSL %s/install.sh | bash -s -- --uninstall\n' "$HOST"
+printf '  Uninstall: curl -fsSL %s/install.sh | bash -s -- --uninstall%s\n' "$HOST" "${ID:+ --id $ID}"
