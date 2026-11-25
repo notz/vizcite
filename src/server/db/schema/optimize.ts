@@ -564,11 +564,11 @@ export const fcRules = pgTable(
 
 export const CMS_CHANGE_STATUSES = ["proposed", "applied", "reverted", "rejected", "failed"] as const;
 export type CmsChangeStatus = (typeof CMS_CHANGE_STATUSES)[number];
-export const CMS_CHANGE_FIELDS = ["title", "meta_title", "meta_description", "excerpt", "image_alt", "json_ld", "slug"] as const;
+export const CMS_CHANGE_FIELDS = ["title", "meta_title", "meta_description", "excerpt", "image_alt", "json_ld", "slug", "content_text"] as const;
 export type CmsChangeField = (typeof CMS_CHANGE_FIELDS)[number];
 
 /**
- * Proposed / applied edits to existing CMS content (WordPress, Shopify, Webflow). `before` is the
+ * Proposed / applied edits to existing CMS content (WordPress, Shopify, Webflow, Kirby). `before` is the
  * live value read right before applying (backup for undo); `after` the new value.
  */
 export const cmsChanges = pgTable(
@@ -585,7 +585,7 @@ export const cmsChanges = pgTable(
     itemTitle: text(),
     itemUrl: text(),
     field: text({ enum: CMS_CHANGE_FIELDS }).notNull(),
-    /** Sub-target for image alt text (image id / media id). */
+    /** Sub-target: image id for image alt text, content path for content_text. */
     fieldKey: text(),
     before: text(),
     after: text().notNull(),

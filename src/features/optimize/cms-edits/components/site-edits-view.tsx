@@ -132,7 +132,7 @@ function ChangeCard({
       <div className="mt-3">
         {editing ? (
           <div className="space-y-2">
-            <Textarea value={value} onChange={(e) => setValue(e.target.value)} rows={change.field === "json_ld" ? 10 : 3} className={cn(change.field === "json_ld" && "font-mono text-xs")} />
+            <Textarea value={value} onChange={(e) => setValue(e.target.value)} rows={change.field === "json_ld" || change.field === "content_text" ? 8 : 3} className={cn((change.field === "json_ld" || change.field === "content_text") && "font-mono text-xs")} />
             <div className="flex justify-end gap-2">
               <Button
                 size="sm"
@@ -161,7 +161,7 @@ function ChangeCard({
             </div>
           </div>
         ) : (
-          <DiffView before={change.before} after={change.after} mono={change.field === "json_ld"} />
+          <DiffView before={change.before} after={change.after} mono={change.field === "json_ld" || (change.field === "content_text" && /<[a-z/]/i.test(change.after))} />
         )}
       </div>
 
@@ -292,7 +292,7 @@ export function SiteEditsView({
         <EmptyState
           icon={Plug}
           title="Connect your CMS to edit your live site"
-          description="Connect WordPress, Shopify or Webflow (Content → Connect CMS, or Integrations → CMS). Then fix titles, meta descriptions, alt texts and JSON-LD of existing pages — every edit is reviewed before it goes live and can be reverted. Framer has no write API and stays export-only."
+          description="Connect WordPress, Shopify, Webflow or Kirby (Content → Connect CMS, or Integrations → CMS). Then fix titles, meta descriptions, alt texts, JSON-LD and (Kirby) content text of existing pages — every edit is reviewed before it goes live and can be reverted. Framer has no write API and stays export-only."
           action={{ label: "Open integrations", href: `/p/${projectId}/integrations` }}
         />
       </Panel>

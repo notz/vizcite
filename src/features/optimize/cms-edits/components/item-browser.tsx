@@ -18,12 +18,20 @@ import { safeHttpUrl } from "@/features/optimize/shared/safe-url";
 import type { CmsEditField, CmsItem, CmsItemType } from "@/server/optimize/integrations/types";
 import type { CmsEditTarget } from "@/server/optimize/cms-edits/service";
 import { FIELD_META, fieldWarnings, normalizeFieldValue, validateFieldValue } from "@/server/optimize/cms-edits/fields";
+import { validateRichText } from "@/server/optimize/cms-edits/rich-text";
 import { applyCmsChangeAction, getCmsItemAction, listCmsItemsAction, proposeCmsChangesAction, suggestCmsValueAction } from "../actions";
 
-const TEXT_FIELDS: Exclude<CmsEditField, "image_alt">[] = ["title", "meta_title", "meta_description", "excerpt", "slug", "json_ld"];
-const SUGGESTABLE = new Set<CmsEditField>(["title", "meta_title", "meta_description", "excerpt", "image_alt"]);
+const TEXT_FIELDS: Exclude<CmsEditField, "image_alt" | "content_text">[] = ["title", "meta_title", "meta_description", "excerpt", "slug", "json_ld"];
+const SUGGESTABLE = new Set<CmsEditField>(["title", "meta_title", "meta_description", "excerpt", "image_alt", "content_text"]);
 
-type DraftKey = string; // field name or `image_alt:<imageId>`
+type DraftKey = string; // field name, `image_alt:<imageId>` or `content_text:<path>`
+
+const KEYED: CmsEditField[] = ["image_alt", "content_text"];
+const fieldOf = (key: DraftKey): CmsEditField => KEYED.find((f) => key.startsWith(`${f}:`)) ?? (key as CmsEditField);
+const subKey = (key: DraftKey): string | null => {
+  const f = KEYED.find((k) => key.startsWith(`${k}:`));
+  return f ? key.slice(f.length + 1) : null;
+};
 
 function Counter({ field, value }: { field: CmsEditField; value: string }) {
   const max = FIELD_META[field].recommendedMax;
@@ -66,6 +74,7 @@ function ItemEditor({
   aiAvailable,
   onBack,
   onDone,
+  onSwitch,
 }: {
   projectId: string;
   provider: string;
@@ -73,6 +82,8 @@ function ItemEditor({
   aiAvailable: boolean;
   onBack: () => void;
   onDone: () => void;
+  /** Opens another translation of the item. */
+  onSwitch: (externalId: string) => void;
 }) {
   const router = useRouter();
   const [drafts, setDrafts] = useState<Record<DraftKey, string>>({});
@@ -82,12 +93,14 @@ function ItemEditor({
 
   const current = useCallback(
     (key: DraftKey): string => {
-      if (key.startsWith("image_alt:")) return item.images.find((i) => i.id === key.slice(10))?.alt ?? "";
-      return item.fields[key as Exclude<CmsEditField, "image_alt">] ?? "";
+      const field = fieldOf(key);
+      if (field === "image_alt") return item.images.find((i) => i.id === subKey(key))?.alt ?? "";
+      if (field === "content_text") return item.texts?.find((t) => t.path === subKey(key))?.value ?? "";
+      return item.fields[field] ?? "";
     },
     [item],
   );
-  const fieldOf = (key: DraftKey): CmsEditField => (key.startsWith("image_alt:") ? "image_alt" : (key as CmsEditField));
+  const textOf = (key: DraftKey) => (fieldOf(key) === "content_text" ? item.texts?.find((t) => t.path === subKey(key)) : undefined);
 
   const changes = useMemo(
     () =>
@@ -96,7 +109,14 @@ function ItemEditor({
         .filter((c) => normalizeFieldValue(c.field, c.value) !== normalizeFieldValue(c.field, current(c.key))),
     [drafts, current],
   );
-  const errors = changes.map((c) => validateFieldValue(c.field, normalizeFieldValue(c.field, c.value))).filter(Boolean) as string[];
+  const errors = changes
+    .map((c) => {
+      const v = normalizeFieldValue(c.field, c.value);
+      const t = textOf(c.key);
+      const err = validateFieldValue(c.field, v) ?? (t ? validateRichText(t.kind, t.value, v) : null);
+      return err && t ? `${t.label}: ${err}` : err;
+    })
+    .filter(Boolean) as string[];
 
   const suggest = (key: DraftKey) => {
     setSuggesting(key);
@@ -106,7 +126,7 @@ function ItemEditor({
         itemType: item.type,
         externalId: item.externalId,
         field: fieldOf(key),
-        fieldKey: key.startsWith("image_alt:") ? key.slice(10) : null,
+        fieldKey: subKey(key),
       });
       setSuggesting(null);
       if (!res.ok) return void toast.error(res.error);
@@ -123,7 +143,7 @@ function ItemEditor({
           externalId: item.externalId,
           changes: changes.map((c) => ({
             field: c.field,
-            fieldKey: c.key.startsWith("image_alt:") ? c.key.slice(10) : null,
+            fieldKey: subKey(c.key),
             value: c.value,
             reason: reason.trim() || null,
           })),
@@ -132,7 +152,7 @@ function ItemEditor({
           toast.error(res.error);
           return resolve();
         }
-        for (const s of res.data.skipped) toast.warning(`${FIELD_META[s.field].label}: ${s.reason}`);
+        for (const s of res.data.skipped) toast.warning(`${s.field === "content_text" ? (item.texts?.find((t) => t.path === s.fieldKey)?.label ?? s.fieldKey) : FIELD_META[s.field].label}: ${s.reason}`);
         let applied = 0;
         if (apply) {
           for (const c of res.data.changes) {
@@ -236,6 +256,25 @@ function ItemEditor({
             </a>
           )}
         </div>
+        {item.translations && item.translations.length > 1 && (
+          <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Language">
+            {item.translations.map((t) => (
+              <Button
+                key={t.externalId}
+                type="button"
+                size="sm"
+                variant={t.language === item.language ? "default" : "outline"}
+                className="h-7 px-2.5 text-xs uppercase"
+                aria-pressed={t.language === item.language}
+                disabled={pending || t.language === item.language}
+                onClick={() => onSwitch(t.externalId)}
+              >
+                {t.language}
+              </Button>
+            ))}
+            <span className="text-[11px] text-muted-foreground">Edits go to the {item.language?.toUpperCase()} translation only.</span>
+          </div>
+        )}
         {item.notes?.map((n) => (
           <p key={n} className="rounded-lg border border-dashed bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
             {n}
@@ -261,6 +300,29 @@ function ItemEditor({
                   {fieldBlock(`image_alt:${img.id}`, `Alt text · ${img.label ?? "Image"}`, { editable: item.editable.includes("image_alt") })}
                 </div>
               </div>
+            ))}
+          </div>
+        )}
+        {!!item.texts?.length && (
+          <div className="space-y-4">
+            <div className="text-xs font-medium">Content</div>
+            {[...new Set(item.texts.map((t) => t.group))].map((group) => (
+              <section key={group} className="space-y-3 rounded-xl border p-3">
+                <h4 className="text-xs font-semibold text-muted-foreground">{group}</h4>
+                {item.texts!
+                  .filter((t) => t.group === group)
+                  .map((t) =>
+                    t.editable ? (
+                      fieldBlock(`content_text:${t.path}`, t.label, { editable: true, multiline: t.kind !== "plain", mono: t.kind === "html" || t.kind === "inline-html" })
+                    ) : (
+                      <div key={t.path} className="space-y-1">
+                        <div className="text-xs text-muted-foreground">{t.label}</div>
+                        <p className="line-clamp-2 rounded-md bg-muted/50 px-2 py-1 text-xs text-muted-foreground">{t.value}</p>
+                        {t.reason && <p className="text-[11px] text-muted-foreground italic">{t.reason}</p>}
+                      </div>
+                    ),
+                  )}
+              </section>
             ))}
           </div>
         )}
@@ -350,7 +412,7 @@ export function ItemBrowser({
       <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-2xl">
         <SheetHeader className="border-b">
           <SheetTitle>Edit site content</SheetTitle>
-          <SheetDescription>Pick a page or product, change its SEO fields and propose or apply the edit. Live values are backed up for undo.</SheetDescription>
+          <SheetDescription>Pick a page or product, change its SEO fields or content text and propose or apply the edit. Live values are backed up for undo.</SheetDescription>
         </SheetHeader>
         {selected ? (
           <div className="flex min-h-0 flex-1 flex-col pt-4">
@@ -362,6 +424,7 @@ export function ItemBrowser({
               aiAvailable={aiAvailable}
               onBack={() => setSelected(null)}
               onDone={() => openItem(selected)}
+              onSwitch={(externalId) => openItem({ ...selected, externalId })}
             />
           </div>
         ) : (

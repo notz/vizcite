@@ -201,6 +201,8 @@ export function createWordPressClient(creds: Creds): CmsClient {
           await api(`/wp/v2/media/${patch.fieldKey}`, { method: "POST", json: { alt_text: patch.value } });
           return {};
         }
+        default:
+          throw new Error(`WordPress can't edit ${patch.field}.`);
       }
     },
     async test() {

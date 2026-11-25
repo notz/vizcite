@@ -30,6 +30,8 @@ export type ProviderMeta = {
   supportsStatusSync?: boolean;
   /** CMS without write API (Framer) — export only */
   exportOnly?: boolean;
+  /** CMS that only edits existing content (Kirby) — not offered as a publish destination. */
+  editOnly?: boolean;
 };
 
 export type ConnectedIntegration = {
@@ -98,10 +100,26 @@ export type CmsDocument = {
 /* ─────────────── Editing existing CMS content (site edits) ─────────────── */
 
 /** Editable SEO fields of existing CMS items (mirrors `CMS_CHANGE_FIELDS` in the optimize schema). */
-export type CmsEditField = "title" | "meta_title" | "meta_description" | "excerpt" | "image_alt" | "json_ld" | "slug";
+export type CmsEditField = "title" | "meta_title" | "meta_description" | "excerpt" | "image_alt" | "json_ld" | "slug" | "content_text";
 
-/** post/page = WordPress, product = Shopify, collection_item / page_seo = Webflow. */
+/** post/page = WordPress (page also Kirby), product = Shopify, collection_item / page_seo = Webflow. */
 export type CmsItemType = "post" | "page" | "product" | "collection_item" | "page_seo";
+
+/** plain/multiline = text, inline-html/html = rich text (links and data-* spans are protected). */
+export type CmsTextKind = "plain" | "multiline" | "inline-html" | "html";
+
+/** One editable text value inside the page content (blocks, structures… — `content_text` edits). */
+export type CmsTextValue = {
+  /** Address of the value (provider-specific, e.g. `body/#blockId/text`) — the change's fieldKey. */
+  path: string;
+  label: string;
+  /** Top-level field label, for grouping. */
+  group: string;
+  kind: CmsTextKind;
+  value: string;
+  editable: boolean;
+  reason?: string;
+};
 
 export type CmsImage = { id: string; src: string | null; alt: string | null; label?: string | null };
 
@@ -113,12 +131,18 @@ export type CmsItem = {
   status: string | null;
   updatedAt: string | null;
   /** Current live values of the text fields (image alt texts live in `images`). */
-  fields: Partial<Record<Exclude<CmsEditField, "image_alt">, string | null>>;
+  fields: Partial<Record<Exclude<CmsEditField, "image_alt" | "content_text">, string | null>>;
   /** Fields this provider can write for this item. */
   editable: CmsEditField[];
   images: CmsImage[];
   /** Why some fields are read-only (e.g. SEO plugin meta not exposed to the REST API). */
   notes?: string[];
+  /** Content text values (`content_text` edits; Kirby). */
+  texts?: CmsTextValue[];
+  /** Language of this item on multi-language sites — edits always go to this translation. */
+  language?: string | null;
+  /** The same item in the site's other languages. */
+  translations?: { language: string; externalId: string; isDefault: boolean }[];
 };
 
 export type CmsListQuery = { type?: CmsItemType; search?: string; cursor?: string | null };

@@ -24,16 +24,20 @@ export const cmsItemsQuery = z.object({
     .string()
     .max(40)
     .optional()
-    .describe("CMS integration: wordpress, shopify_cms or webflow. Default: the first connected CMS with edit support."),
-  type: z.enum(ITEM_TYPES).optional().describe("Item type: post/page (WordPress), product (Shopify), collection_item/page_seo (Webflow)."),
+    .describe("CMS integration: wordpress, shopify_cms, webflow or kirby. Default: the first connected CMS with edit support."),
+  type: z.enum(ITEM_TYPES).optional().describe("Item type: post/page (WordPress), page (Kirby), product (Shopify), collection_item/page_seo (Webflow)."),
   search: z.string().max(200).optional().describe("Search in titles / slugs."),
   cursor: z.string().max(500).optional().describe("Pagination cursor from meta.nextCursor."),
 });
 
 export const cmsItemQuery = z.object({
-  provider: z.string().max(40).describe("CMS integration key (wordpress, shopify_cms, webflow)."),
+  provider: z.string().max(40).describe("CMS integration key (wordpress, shopify_cms, webflow, kirby)."),
   type: z.enum(ITEM_TYPES),
-  externalId: z.string().min(1).max(200).describe("Item id in the CMS (from the items list)."),
+  externalId: z
+    .string()
+    .min(1)
+    .max(200)
+    .describe("Item id in the CMS (from the items list). Multi-language Kirby sites: `<lang>:<pageId>`, e.g. `en:blog/my-post` — other languages are listed in the item's translations."),
 });
 
 export { changeListQuery as cmsChangesQuery, proposeInput as cmsProposeBody };
@@ -48,7 +52,7 @@ export function principalSource(p: ApiPrincipal, fallback: CmsChangeSource): Cms
 }
 
 const NOT_CONNECTED =
-  "No CMS with edit support is connected to this project. Connect WordPress, Shopify or Webflow under Content → Connect CMS (Integrations).";
+  "No CMS with edit support is connected to this project. Connect WordPress, Shopify, Webflow or Kirby under Content → Connect CMS (Integrations).";
 
 async function resolveProvider(projectId: string, provider: string | undefined) {
   const targets = await listCmsEditTargets(projectId);
