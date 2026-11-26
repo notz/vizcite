@@ -14,6 +14,7 @@ import { createWordPressClient } from "./providers/wordpress";
 import { createWebflowClient } from "./providers/webflow";
 import { createShopifyClient } from "./providers/shopify";
 import { createFramerClient } from "./providers/framer";
+import { createKirbyClient } from "./providers/kirby";
 
 export {
   PM_PROVIDERS,
@@ -59,6 +60,8 @@ export function createCmsClient(provider: string, creds: Creds, target: Target):
       return createShopifyClient(creds, target);
     case "framer":
       return createFramerClient(creds, target);
+    case "kirby":
+      return createKirbyClient(creds);
     default:
       throw new Error(`Unknown CMS provider "${provider}".`);
   }

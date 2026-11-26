@@ -506,6 +506,17 @@ export const INTEGRATIONS: CatalogEntry[] = [
     connect: "token",
     setupHref: cms("framer"),
   },
+  {
+    key: "kirby",
+    name: "Kirby",
+    category: "cms",
+    description: "Edit existing Kirby pages per language — SEO fields, alt texts and block text — with review and undo.",
+    domain: "getkirby.com",
+    color: "#ffb000",
+    status: "beta",
+    connect: "token",
+    setupHref: cms("kirby"),
+  },
 ];
 
 export const INTEGRATION_MAP = new Map(INTEGRATIONS.map((i) => [i.key, i]));

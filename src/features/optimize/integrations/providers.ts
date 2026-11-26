@@ -216,6 +216,29 @@ export const CMS_PROVIDERS: ProviderMeta[] = [
     ],
     targetLabel: "Collection",
   },
+  {
+    key: "kirby",
+    name: "Kirby",
+    kind: "cms",
+    editOnly: true,
+    description:
+      "Edit existing Kirby pages (Kirby 5 REST API): titles, SEO fields, image alt texts and the text inside blocks, layouts and structures — per language, links and placeholders preserved.",
+    setupSteps: [
+      "Create a dedicated Kirby user for Vizcite (without two-factor auth) whose role may update pages and files.",
+      "Enable Basic auth for the API in site/config/config.php: 'api' => ['basicAuth' => true] — Kirby only allows it over HTTPS.",
+      "Enter the site URL (e.g. your staging server) and the user's email and password below. Internal hosts must be allowed under Admin → Authentication → private network allowlist.",
+      "Multi-language sites: languages are read from the API; if the user can't read them, list the codes below (default language first).",
+      "Optional: list key-like text fields that must never be edited (e.g. tracking or campaign ids). Selects, links, URLs and fields with a pattern are skipped automatically.",
+    ],
+    docsUrl: "https://getkirby.com/docs/reference/api",
+    fields: [
+      { key: "siteUrl", label: "Site URL", type: "url", placeholder: "https://staging.example.com", required: true },
+      { key: "email", label: "Email", type: "email", required: true },
+      { key: "password", label: "Password", type: "password", required: true, secret: true },
+      { key: "languages", label: "Language codes (optional)", type: "text", placeholder: "de, en, fr", help: "Only needed when the user can't read the languages. Default language first." },
+      { key: "excludeFields", label: "Never edit these fields (optional)", type: "text", placeholder: "campaign, event, trackingId", help: "Field names, comma-separated." },
+    ],
+  },
 ];
 
 const ALL = [...PM_PROVIDERS, ...CMS_PROVIDERS];

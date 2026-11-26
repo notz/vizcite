@@ -2,9 +2,9 @@ import "server-only";
 import { S, type OpenApiOperation } from "../openapi-helpers";
 import { cmsChangesQuery, cmsItemQuery, cmsItemsQuery, cmsProposeBody } from "@/server/optimize/cms-edits/api";
 
-const { str, strN, int, arr, obj } = S;
+const { str, strN, int, arr, obj, bool } = S;
 
-const fieldEnum = { type: "string", enum: ["title", "meta_title", "meta_description", "excerpt", "image_alt", "json_ld", "slug"] };
+const fieldEnum = { type: "string", enum: ["title", "meta_title", "meta_description", "excerpt", "image_alt", "json_ld", "slug", "content_text"] };
 const itemTypeEnum = { type: "string", enum: ["post", "page", "product", "collection_item", "page_seo"] };
 
 const cmsItem = obj({
@@ -21,6 +21,22 @@ const cmsItem = obj({
   editable: arr(fieldEnum),
   images: arr(obj({ id: str, src: strN, alt: strN, label: strN })),
   notes: arr(str),
+  texts: {
+    ...arr(
+      obj({
+        path: { ...str, description: "fieldKey for content_text edits." },
+        label: str,
+        group: str,
+        kind: { type: "string", enum: ["plain", "multiline", "inline-html", "html"] },
+        value: str,
+        editable: bool,
+        reason: strN,
+      }),
+    ),
+    description: "Content text values (Kirby: blocks, layouts, structures…). Links and data-* placeholders in HTML values must stay unchanged.",
+  },
+  language: { ...strN, description: "Language of this item (multi-language sites). Edits always go to this translation." },
+  translations: arr(obj({ language: str, externalId: str, isDefault: bool })),
 });
 
 const cmsChange = obj({

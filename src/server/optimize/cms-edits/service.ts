@@ -14,10 +14,11 @@ import { createCmsClient, getProviderMeta } from "../integrations/registry";
 import { getIntegrationRow, listIntegrationRows, readConfig, readCreds, readTarget } from "../integrations/store";
 import type { CmsClient, CmsEditField, CmsItem, CmsItemType, CmsListQuery } from "../integrations/types";
 import { FIELD_META, ITEM_TYPE_LABEL, fieldWarnings, itemFieldValue, normalizeFieldValue, sameValue, validateFieldValue } from "./fields";
+import { protect, restore, validateRichText } from "./rich-text";
 
 /**
- * CMS site edits: browse existing CMS content (WordPress, Shopify, Webflow), propose changes to
- * titles / meta / alt text / JSON-LD, apply them after approval (the live value read right
+ * CMS site edits: browse existing CMS content (WordPress, Shopify, Webflow, Kirby), propose changes
+ * to titles / meta / alt text / JSON-LD / content text, apply them after approval (the live value read right
  * before writing is kept as backup) and revert them. Proposals from the agent, MCP and REST are
  * never applied automatically.
  */
@@ -29,6 +30,7 @@ const SCOPE_HINT: Record<string, string> = {
   wordpress: "the WordPress user needs the Editor or Administrator role",
   shopify_cms: "the Admin API token needs the read_products, write_products and write_files scopes",
   webflow: "the API token needs CMS read/write, Pages read/write and Sites read",
+  kirby: "the Kirby user needs permission to update pages and files, and the site needs 'api' => ['basicAuth' => true] (HTTPS)",
 };
 
 function providerName(provider: string) {
@@ -132,6 +134,11 @@ function safeItem(item: CmsItem): CmsItem {
   return { ...item, url: safeHttpUrl(item.url), images: item.images.map((i) => ({ ...i, src: safeHttpUrl(i.src) })) };
 }
 
+/** Label of a change: content texts show their path. */
+function changeLabel(field: CmsEditField, fieldKey: string | null): string {
+  return field === "content_text" && fieldKey ? `${FIELD_META[field].label} · ${fieldKey}` : FIELD_META[field].label;
+}
+
 /* ───────────────────────────── Changes ───────────────────────────── */
 
 type ChangeRow = typeof cmsChanges.$inferSelect;
@@ -186,7 +193,7 @@ async function toViews(rows: ChangeRow[]): Promise<CmsChangeView[]> {
     itemTitle: r.itemTitle,
     itemUrl: safeHttpUrl(r.itemUrl),
     field: r.field,
-    fieldLabel: FIELD_META[r.field].label,
+    fieldLabel: changeLabel(r.field, r.fieldKey),
     fieldKey: r.fieldKey,
     before: r.before,
     after: r.after,
@@ -256,8 +263,12 @@ export const proposeInput = z.object({
   changes: z
     .array(
       z.object({
-        field: z.enum(["title", "meta_title", "meta_description", "excerpt", "image_alt", "json_ld", "slug"]),
-        fieldKey: z.string().max(200).nullish().describe("Image id (image_alt only) — from the item's images."),
+        field: z.enum(["title", "meta_title", "meta_description", "excerpt", "image_alt", "json_ld", "slug", "content_text"]),
+        fieldKey: z
+          .string()
+          .max(1000)
+          .nullish()
+          .describe("Image id (image_alt) from the item's images, or the text path (content_text) from the item's texts."),
         value: z.string().max(50_000),
         reason: z.string().max(1000).nullish(),
       }),
@@ -289,7 +300,7 @@ export async function proposeCmsChanges(projectId: string, raw: ProposeInput, ac
   const saved: ChangeRow[] = [];
   const skipped: ProposeResult["skipped"] = [];
   for (const c of input.changes) {
-    const fieldKey = c.field === "image_alt" ? (c.fieldKey ?? null) : null;
+    const fieldKey = c.field === "image_alt" || c.field === "content_text" ? (c.fieldKey ?? null) : null;
     if (!item.editable.includes(c.field)) {
       skipped.push({ field: c.field, fieldKey, reason: `${FIELD_META[c.field].label} can't be edited for this ${ITEM_TYPE_LABEL[item.type].toLowerCase()}.${item.notes?.length ? ` ${item.notes[0]}` : ""}` });
       continue;
@@ -298,8 +309,13 @@ export async function proposeCmsChanges(projectId: string, raw: ProposeInput, ac
       skipped.push({ field: c.field, fieldKey, reason: `Unknown image "${fieldKey ?? ""}" — use one of: ${item.images.map((i) => i.id).join(", ") || "none"}.` });
       continue;
     }
+    const text = c.field === "content_text" ? item.texts?.find((t) => t.path === fieldKey) : undefined;
+    if (c.field === "content_text" && !text?.editable) {
+      skipped.push({ field: c.field, fieldKey, reason: text?.reason ?? `Unknown text path "${fieldKey ?? ""}" — use a path from the item's texts.` });
+      continue;
+    }
     const after = normalizeFieldValue(c.field, c.value);
-    const invalid = validateFieldValue(c.field, after);
+    const invalid = validateFieldValue(c.field, after) ?? (text ? validateRichText(text.kind, text.value, after) : null);
     if (invalid) {
       skipped.push({ field: c.field, fieldKey, reason: invalid });
       continue;
@@ -357,7 +373,7 @@ export async function proposeCmsChanges(projectId: string, raw: ProposeInput, ac
         taskId: input.taskId,
         projectId,
         kind: "edited",
-        body: `Proposed ${saved.length} site edit${saved.length === 1 ? "" : "s"} for “${item.title}” (${saved.map((r) => FIELD_META[r.field].label).join(", ")}) — review under Content → Site edits.`,
+        body: `Proposed ${saved.length} site edit${saved.length === 1 ? "" : "s"} for “${item.title}” (${saved.map((r) => changeLabel(r.field, r.fieldKey)).join(", ")}) — review under Content → Site edits.`,
         meta: { changeIds: saved.map((r) => r.id), provider },
         userId: actor.id,
       });
@@ -423,7 +439,15 @@ export async function applyCmsChange(projectId: string, changeId: string, actor:
     const item = await viaProvider(ed.provider, () => ed.client.getItem(row.itemType as CmsItemType, row.externalId));
     if (!item.editable.includes(row.field)) throw new ActionError(`${FIELD_META[row.field].label} is no longer editable for this item.`, "conflict");
     const live = itemFieldValue(item, row.field, row.fieldKey);
-    if (live == null) throw new ActionError("The image this change targets no longer exists on the item.", "conflict");
+    if (live == null) throw new ActionError(`The ${row.field === "content_text" ? "text" : "image"} this change targets no longer exists on the item.`, "conflict");
+    // Content paths can shift (reordered structures, edited blocks): only write over the value the proposal was made for.
+    if (row.field === "content_text" && row.before != null && !sameValue(row.field, live, row.before) && !sameValue(row.field, live, row.after))
+      throw new ActionError("This text changed in the CMS since the edit was proposed — propose it again.", "conflict");
+    if (row.field === "content_text") {
+      const text = item.texts?.find((t) => t.path === row.fieldKey);
+      const invalid = text ? validateRichText(text.kind, text.value, row.after) : null;
+      if (invalid) throw new ActionError(invalid, "invalid");
+    }
     let note: string | null = null;
     let warning: string | null = null;
     if (sameValue(row.field, live, row.after)) {
@@ -457,7 +481,7 @@ export async function applyCmsChange(projectId: string, changeId: string, actor:
         taskId: row.taskId,
         projectId,
         kind: "pushed",
-        body: `Site edit applied in ${ed.name}: ${FIELD_META[row.field].label} of “${item.title}”.`,
+        body: `Site edit applied in ${ed.name}: ${changeLabel(row.field, row.fieldKey)} of “${item.title}”.`,
         meta: { changeId: row.id, provider: row.provider, url: item.url },
         userId: actor.id,
       });
@@ -483,7 +507,7 @@ export async function revertCmsChange(projectId: string, changeId: string, actor
   const ed = await openEditor(projectId, row.provider);
   const item = await viaProvider(ed.provider, () => ed.client.getItem(row.itemType as CmsItemType, row.externalId));
   const live = itemFieldValue(item, row.field, row.fieldKey);
-  if (live == null) throw new ActionError("The image this change targeted no longer exists on the item.", "conflict");
+  if (live == null) throw new ActionError(`The ${row.field === "content_text" ? "text" : "image"} this change targeted no longer exists on the item.`, "conflict");
   if (!opts.force && !sameValue(row.field, live, row.after))
     throw new ActionError(
       `The live value changed since this edit was applied (now “${normalizeFieldValue(row.field, live).slice(0, 120)}”). Revert anyway to restore the backup?`,
@@ -511,7 +535,7 @@ export async function revertCmsChange(projectId: string, changeId: string, actor
       taskId: row.taskId,
       projectId,
       kind: "pushed",
-      body: `Site edit reverted in ${ed.name}: ${FIELD_META[row.field].label} of “${item.title}” restored.`,
+      body: `Site edit reverted in ${ed.name}: ${changeLabel(row.field, row.fieldKey)} of “${item.title}” restored.`,
       meta: { changeId: row.id, provider: row.provider },
       userId: actor.id,
     });
@@ -564,6 +588,8 @@ const SUGGEST_GUIDE: Partial<Record<CmsEditField, string>> = {
   image_alt: "alt text under 125 characters that literally describes what the image most likely shows, no 'image of'",
   excerpt: "a 1–2 sentence summary (max 300 characters) that states the key takeaway",
   title: "a clear, specific page title (max 70 characters)",
+  content_text:
+    "an improved version of this text: clearer, more specific and easy for AI engines to quote; keep the meaning, facts, tone, approximate length (±20 %), any HTML tags and every ⟦n⟧ placeholder exactly once",
 };
 
 export async function suggestCmsValue(
@@ -581,6 +607,9 @@ export async function suggestCmsValue(
   ]);
   const image = input.field === "image_alt" ? item.images.find((i) => i.id === input.fieldKey) : null;
   if (input.field === "image_alt" && !image) throw new ActionError("Choose the image first.", "invalid");
+  const text = input.field === "content_text" ? item.texts?.find((t) => t.path === input.fieldKey && t.editable) : null;
+  if (input.field === "content_text" && !text) throw new ActionError("Choose an editable text first.", "invalid");
+  const prot = text ? protect(text.value) : null;
   const facts = [
     `Brand: ${project?.name ?? ""} (${project?.domain ?? ""})`,
     `Page type: ${ITEM_TYPE_LABEL[item.type]}`,
@@ -590,19 +619,30 @@ export async function suggestCmsValue(
     item.fields.meta_description ? `Current meta description: ${item.fields.meta_description}` : "",
     item.fields.excerpt ? `Summary: ${item.fields.excerpt.slice(0, 1200)}` : "",
     image ? `Image: ${image.label ?? ""} ${image.src ?? ""} (current alt: ${image.alt || "none"})` : "",
+    text && prot ? `Text location: ${text.label}\nText format: ${text.kind === "plain" ? "single line, plain text" : text.kind === "multiline" ? "plain text" : "HTML"}\nCurrent text:\n${prot.text}` : "",
   ].filter(Boolean);
+  // The item's own translation decides the language (multi-language CMS), else the project's.
+  const language = item.language ?? project?.language ?? "en";
   const res = await runLlm({
     purpose: "content.site_edit",
     system: "You write concise on-page SEO copy for existing web pages. Use only facts given. Answer in the page's language.",
-    prompt: `${facts.join("\n")}\n\nLanguage: ${project?.language ?? "en"}.\nWrite ${guide}. Return JSON {"value": "..."}.`,
+    prompt: `${facts.join("\n")}\n\nLanguage: ${language} (write in this language only).\nWrite ${guide}. Return JSON {"value": "..."}.`,
     schema: z.object({ value: z.string() }),
     effort: "low",
     projectId,
     workspaceId: ctx.workspaceId,
     userId: ctx.userId,
   });
-  const value = normalizeFieldValue(input.field, res.data.value.replace(/^["“]|["”]$/g, ""));
-  const invalid = validateFieldValue(input.field, value);
+  let raw = res.data.value.replace(/^["“]|["”]$/g, "");
+  if (prot) {
+    try {
+      raw = restore(raw, prot.tokens);
+    } catch (err) {
+      throw new ActionError(`The AI suggestion damaged links or placeholders (${err instanceof Error ? err.message : "unknown"}) — try again.`, "invalid");
+    }
+  }
+  const value = normalizeFieldValue(input.field, raw);
+  const invalid = validateFieldValue(input.field, value) ?? (text ? validateRichText(text.kind, text.value, value) : null);
   if (invalid) throw new ActionError(invalid, "invalid");
   return { value };
 }

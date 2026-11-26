@@ -4,7 +4,7 @@
  */
 import type { CmsEditField, CmsItem, CmsItemType } from "../integrations/types";
 
-export const CMS_EDIT_FIELDS: CmsEditField[] = ["title", "meta_title", "meta_description", "excerpt", "slug", "image_alt", "json_ld"];
+export const CMS_EDIT_FIELDS: CmsEditField[] = ["title", "meta_title", "meta_description", "excerpt", "slug", "image_alt", "json_ld", "content_text"];
 
 export const FIELD_META: Record<CmsEditField, { label: string; hint: string; recommendedMax?: number; max: number; multiline?: boolean }> = {
   title: { label: "Title", hint: "Visible H1 / product or item name.", max: 300 },
@@ -20,6 +20,7 @@ export const FIELD_META: Record<CmsEditField, { label: string; hint: string; rec
   slug: { label: "URL slug", hint: "Changing a slug changes the URL — add a redirect for the old one.", max: 200 },
   image_alt: { label: "Image alt text", hint: "Describes the image for screen readers and AI engines (≈ 125 characters).", recommendedMax: 125, max: 500 },
   json_ld: { label: "JSON-LD", hint: "Structured data (schema.org) embedded in the page.", max: 50_000, multiline: true },
+  content_text: { label: "Content text", hint: "Text inside the page content (blocks, sections…). Links and placeholders stay unchanged.", max: 20_000, multiline: true },
 };
 
 export const ITEM_TYPE_LABEL: Record<CmsItemType, string> = {
@@ -46,6 +47,8 @@ export function normalizeFieldValue(field: CmsEditField, value: string | null | 
       return t;
     }
   }
+  // Rich text: whitespace between tags is insignificant (CMSs re-serialize it).
+  if (field === "content_text") return v.trim().replace(/>\s+</g, "><");
   if (FIELD_META[field].multiline) return v.trim();
   return v.replace(/\s+/g, " ").trim();
 }
@@ -84,13 +87,14 @@ export function sameValue(field: CmsEditField, a: string | null | undefined, b: 
   return normalizeFieldValue(field, a) === normalizeFieldValue(field, b);
 }
 
-/** Current live value of a field on an item (image alt texts are addressed by image id). */
-export function itemFieldValue(item: Pick<CmsItem, "fields" | "images">, field: CmsEditField, fieldKey?: string | null): string | null {
+/** Current live value of a field on an item (image alt texts by image id, content texts by path). */
+export function itemFieldValue(item: Pick<CmsItem, "fields" | "images" | "texts">, field: CmsEditField, fieldKey?: string | null): string | null {
+  if (field === "content_text") return item.texts?.find((t) => t.path === fieldKey)?.value ?? null;
   if (field === "image_alt") {
     const img = item.images.find((i) => i.id === fieldKey);
     return img ? (img.alt ?? "") : null;
   }
-  const v = item.fields[field];
+  const v = item.fields[field as Exclude<CmsEditField, "image_alt" | "content_text">];
   return v === undefined ? null : (v ?? "");
 }
 

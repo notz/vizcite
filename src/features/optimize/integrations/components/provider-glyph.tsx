@@ -16,6 +16,7 @@ const GLYPHS: Record<string, { bg: string; mark: string; fg?: string }> = {
   webflow: { bg: "#146ef5", mark: "Wf" },
   shopify_cms: { bg: "#5e8e3e", mark: "S" },
   framer: { bg: "#0055ff", mark: "Fr" },
+  kirby: { bg: "#ffb000", mark: "K", fg: "#18181b" },
 };
 
 export function ProviderGlyph({

@@ -17,7 +17,7 @@ import {
 const pid = z.string().min(1).max(64);
 const changeId = z.string().min(1).max(64);
 const itemType = z.enum(["post", "page", "product", "collection_item", "page_seo"]);
-const field = z.enum(["title", "meta_title", "meta_description", "excerpt", "image_alt", "json_ld", "slug"]);
+const field = z.enum(["title", "meta_title", "meta_description", "excerpt", "image_alt", "json_ld", "slug", "content_text"]);
 
 const listInput = z.object({
   provider: z.string().min(1).max(40),
@@ -87,7 +87,7 @@ const suggestInput = z.object({
   itemType,
   externalId: z.string().min(1).max(200),
   field,
-  fieldKey: z.string().max(200).nullish(),
+  fieldKey: z.string().max(1000).nullish(),
 });
 
 export async function suggestCmsValueAction(projectId: string, input: z.input<typeof suggestInput>) {

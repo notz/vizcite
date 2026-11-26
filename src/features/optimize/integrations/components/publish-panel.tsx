@@ -50,7 +50,7 @@ export function PublishPanel({
   published: Published;
 }) {
   const router = useRouter();
-  const cms = useMemo(() => connected.filter((c) => c.kind === "cms" && c.status !== "disconnected"), [connected]);
+  const cms = useMemo(() => connected.filter((c) => c.kind === "cms" && c.status !== "disconnected" && !getProviderMeta(c.provider)?.editOnly), [connected]);
   const options = useMemo(() => {
     const list = cms.map((c) => ({ provider: c.provider, name: c.name, item: c as ConnectedIntegration | null }));
     if (!list.some((o) => o.provider === "framer")) list.push({ provider: "framer", name: "Framer (export)", item: null });

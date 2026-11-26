@@ -75,7 +75,7 @@ export const TASKS_EMPTY_TEXT =
 export const PM_PROVIDER_KEYS = ["linear", "jira", "asana", "clickup", "trello", "monday", "notion", "awork", "webhook"] as const;
 export type PmProviderKey = (typeof PM_PROVIDER_KEYS)[number];
 
-export const CMS_PROVIDER_KEYS = ["wordpress", "webflow", "shopify_cms", "framer"] as const;
+export const CMS_PROVIDER_KEYS = ["wordpress", "webflow", "shopify_cms", "framer", "kirby"] as const;
 export type CmsProviderKey = (typeof CMS_PROVIDER_KEYS)[number];
 
 /** Aliases accepted in `?connect=` links from the integrations catalog. */
@@ -104,6 +104,7 @@ export const PROVIDER_LABELS: Record<string, string> = {
   webflow: "Webflow",
   shopify_cms: "Shopify",
   framer: "Framer",
+  kirby: "Kirby",
 };
 
 /* ─────────────── Content ─────────────── */

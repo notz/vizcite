@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   cmsChangesForApi,
   cmsItemForApi,
+  cmsItemQuery,
   cmsItemsForApi,
   cmsProposeBody,
   proposeCmsChangesForApi,
@@ -20,11 +21,11 @@ export const cmsTools = [
     name: "list_cms_items",
     title: "List CMS items",
     description:
-      "Lists existing content of the project's connected CMS (WordPress posts/pages, Shopify products, Webflow CMS items / static pages) with the current SEO title, meta description and editable fields. Use it to find pages to improve, then propose_cms_change.",
+      "Lists existing content of the project's connected CMS (WordPress posts/pages, Shopify products, Webflow CMS items / static pages, Kirby pages) with the current SEO title, meta description and editable fields. Use it to find pages to improve, then get_cms_item and propose_cms_change. Kirby lists the default language; get_cms_item shows the other translations.",
     input: z.object({
       projectId: projectIdInput,
-      provider: z.string().max(40).optional().describe("wordpress, shopify_cms or webflow. Default: first connected CMS with edit support."),
-      type: z.enum(ITEM_TYPES).optional().describe("post/page (WordPress), product (Shopify), collection_item/page_seo (Webflow)."),
+      provider: z.string().max(40).optional().describe("wordpress, shopify_cms, webflow or kirby. Default: first connected CMS with edit support."),
+      type: z.enum(ITEM_TYPES).optional().describe("post/page (WordPress), page (Kirby), product (Shopify), collection_item/page_seo (Webflow)."),
       search: z.string().max(200).optional(),
       cursor: z.string().max(500).optional().describe("nextCursor from a previous call."),
     }),
@@ -56,12 +57,12 @@ export const cmsTools = [
     name: "get_cms_item",
     title: "CMS item details",
     description:
-      "One CMS item with all live SEO values (title, SEO title, meta description, excerpt, slug, JSON-LD where supported), its images with alt texts (image ids for image_alt edits), editable fields and notes on read-only fields.",
+      "One CMS item with all live SEO values (title, SEO title, meta description, excerpt, slug, JSON-LD where supported), its images with alt texts (image ids for image_alt edits), editable fields and notes on read-only fields. Kirby also returns the content texts (blocks, layouts, structures) with their paths for content_text edits, and the item's translations — the language prefix of externalId (e.g. `en:blog/post`) decides which translation is read and edited.",
     input: z.object({
       projectId: projectIdInput,
-      provider: z.string().max(40).describe("wordpress, shopify_cms or webflow"),
+      provider: z.string().max(40).describe("wordpress, shopify_cms, webflow or kirby"),
       type: z.enum(ITEM_TYPES),
-      externalId: z.string().min(1).max(200),
+      externalId: cmsItemQuery.shape.externalId,
     }),
     scope: "read",
     permission: "prompts.manage",
@@ -71,10 +72,14 @@ export const cmsTools = [
       const item = await cmsItemForApi(p, { provider: args.provider, type: args.type, externalId: args.externalId });
       const lines = Object.entries(item.fields).map(([k, v]) => `- **${k}**${item.editable.includes(k as never) ? "" : " (read-only)"}: ${v ? v.slice(0, 600) : "—"}`);
       const imgs = item.images.map((i) => `- image \`${i.id}\` ${i.label ?? ""}: alt ${i.alt ? `“${i.alt}”` : "missing"}`);
+      const texts = (item.texts ?? []).map(
+        (t) => `- \`${t.path}\` ${t.label} (${t.kind}${t.editable ? "" : `, read-only: ${t.reason ?? ""}`}): ${t.value.length > 400 ? `${t.value.slice(0, 400)}… (${t.value.length} ch)` : t.value}`,
+      );
+      const langs = item.translations?.length ? `\nLanguage: **${item.language}** · other translations: ${item.translations.filter((t) => t.language !== item.language).map((t) => `\`${t.externalId}\``).join(", ")}` : "";
       return {
-        text: `**${item.title}** (${item.type}, ${item.status ?? "—"})${item.url ? ` — ${item.url}` : ""}\n\n${[...lines, ...imgs].join("\n")}${
-          item.notes?.length ? `\n\nNotes: ${item.notes.join(" ")}` : ""
-        }`,
+        text: `**${item.title}** (${item.type}, ${item.status ?? "—"})${item.url ? ` — ${item.url}` : ""}${langs}\n\n${[...lines, ...imgs].join("\n")}${
+          texts.length ? `\n\n**Content texts** (content_text, fieldKey = path; HTML values: keep every <a …> tag and <span data-…>…</span> placeholder exactly):\n${texts.join("\n")}` : ""
+        }${item.notes?.length ? `\n\nNotes: ${item.notes.join(" ")}` : ""}`,
         data: { projectId: p.id, item },
       };
     },
@@ -111,12 +116,12 @@ export const cmsTools = [
     name: "propose_cms_change",
     title: "Propose site edits",
     description:
-      "Proposes edits to ONE existing CMS item (SEO title, meta description, title, excerpt, slug, image alt text, JSON-LD). Creates proposals only — nothing changes on the live site until a project member approves and applies them under Content → Site edits (with backup and one-click undo). Get field names, image ids and editable fields from get_cms_item first. Include a short reason per change.",
+      "Proposes edits to ONE existing CMS item (SEO title, meta description, title, excerpt, slug, image alt text, JSON-LD, content text). Creates proposals only — nothing changes on the live site until a project member approves and applies them under Content → Site edits (with backup and one-click undo). Get field names, image ids, text paths and editable fields from get_cms_item first. content_text: fieldKey = the text's path, value in the same format (HTML stays HTML, links and data-* placeholder spans unchanged). On multi-language sites the externalId's language prefix decides the translation that is edited — write in that language. Include a short reason per change.",
     input: z.object({
       projectId: projectIdInput,
-      provider: cmsProposeBody.shape.provider.describe("wordpress, shopify_cms or webflow"),
+      provider: cmsProposeBody.shape.provider.describe("wordpress, shopify_cms, webflow or kirby"),
       itemType: cmsProposeBody.shape.itemType,
-      externalId: cmsProposeBody.shape.externalId,
+      externalId: cmsItemQuery.shape.externalId,
       changes: cmsProposeBody.shape.changes,
       taskId: cmsProposeBody.shape.taskId.describe("Optimization task this edit belongs to (optional)."),
     }),
