@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/notz/vizcite/compare/v0.3.0...v0.4.0) (2026-11-26)
+
+
+### Features
+
+* **audit:** Work with Agent button on audit issues ([#20](https://github.com/notz/vizcite/issues/20)) ([d761b3d](https://github.com/notz/vizcite/commit/d761b3ded20cf3c19259129208646f8a20ed93f4))
+* **cms:** Kirby site edits with block text per language ([#16](https://github.com/notz/vizcite/issues/16)) ([7320d83](https://github.com/notz/vizcite/commit/7320d83cfc4b2fc3a70953ebeda8129e2fa36e4d))
+
+
+### Bug Fixes
+
+* **agent:** keep install dialog open after creating the first agent ([#21](https://github.com/notz/vizcite/issues/21)) ([b4aabcc](https://github.com/notz/vizcite/commit/b4aabcc00ba0d52cccd0e7eee0fb26567ed2c711))
+
 ## [0.3.0](https://github.com/notz/vizcite/compare/v0.2.0...v0.3.0) (2026-11-25)
 
 
