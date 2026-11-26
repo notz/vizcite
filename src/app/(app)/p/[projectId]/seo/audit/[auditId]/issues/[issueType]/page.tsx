@@ -6,6 +6,7 @@ import { PageContainer, Panel } from "@/components/app/page";
 import { requireProject } from "@/server/auth/guards";
 import { getAudit, getAuditIssues } from "@/server/audit-crawler/service";
 import { getIssueDescriptor, ISSUE_CATEGORIES } from "@/server/audit-crawler/registry";
+import { AuditIssueAgentButton } from "@/features/audit/components/audit-issue-agent-button";
 import { AffectedTable } from "@/features/audit/components/affected-table";
 import { hostOf, SeverityBadge } from "@/features/audit/components/bits";
 import { CanExport } from "@/components/app/export-menu";
@@ -47,13 +48,25 @@ export default async function AuditIssuePage({ params, searchParams }: PageProps
               {q ? ` matching “${q}”` : ""}
             </p>
           </div>
-          <CanExport>
+          <div className="flex gap-2">
+            <AuditIssueAgentButton
+              projectId={projectId}
+              title={descriptor.title}
+              severity={descriptor.severity}
+              explanation={descriptor.explanation}
+              howToFix={descriptor.howToFix}
+              count={total}
+              urls={issues.map((i) => i.pageUrl)}
+              className="gap-1.5"
+            />
+            <CanExport>
             <Button asChild variant="outline" size="sm" className="gap-1.5">
               <a href={`${base}/export?kind=issues&format=csv&issueType=${issueType}`}>
                 <Download className="size-3.5" /> Export CSV
               </a>
             </Button>
           </CanExport>
+          </div>
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2">

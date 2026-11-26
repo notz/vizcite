@@ -133,7 +133,7 @@ export default async function AuditDetailPage({ params, searchParams }: PageProp
     content = <PerformanceTable base={base} rows={overview.lighthouse.rows} predominantHost={overview.predominantHost} />;
   } else {
     const samples = await getIssueSamples(projectId, auditId, 20);
-    content = <IssuesView base={base} summary={overview.summary} samples={samples} predominantHost={overview.predominantHost} />;
+    content = <IssuesView projectId={projectId} base={base} summary={overview.summary} samples={samples} predominantHost={overview.predominantHost} />;
   }
 
   const banners = (
