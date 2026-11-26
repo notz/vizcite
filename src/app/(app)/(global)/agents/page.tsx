@@ -75,9 +75,6 @@ export default async function AgentsPage() {
               <p className="mt-2 max-w-md text-sm text-balance text-muted-foreground">
                 A tiny background service that lets Vizcite use the Claude Code or Codex CLI already installed on your computer or a server. Needs Node.js 20+.
               </p>
-              <div className="mt-5">
-                <CreateAgentButton workspaces={workspaces} defaultWorkspaceId={defaultWorkspaceId} />
-              </div>
             </div>
             <ol className="space-y-3">
               {STEPS.map((s, i) => (
