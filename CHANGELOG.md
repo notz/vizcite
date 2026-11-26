@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/notz/vizcite/compare/v0.2.0...v0.3.0) (2026-11-25)
+
+
+### Features
+
+* **agent:** add --id to install several agents per machine ([#17](https://github.com/notz/vizcite/issues/17)) ([75f361f](https://github.com/notz/vizcite/commit/75f361ffd63ed37a869ad69584e390bbeee2f424))
+
 ## [0.2.0](https://github.com/notz/vizcite/compare/v0.1.1...v0.2.0) (2026-11-24)
 
 
