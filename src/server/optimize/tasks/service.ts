@@ -14,7 +14,7 @@ import {
 import { newId } from "@/server/db/schema/_helpers";
 import { listProjectAccessUsers } from "@/server/auth/project-access";
 import { addTaskActivity } from "./activity";
-import { priorityScore } from "./scoring";
+import { priorityScore, taskFingerprint } from "./scoring";
 import { TASKS_GENERATE_JOB } from "./jobs";
 import { snapshotTaskOutcomesSafe } from "./outcome";
 
@@ -85,6 +85,17 @@ export async function listTasks(projectId: string): Promise<TaskListItem[]> {
 }
 
 /** Workspace members who can access the project (assignable users) — incl. access through project groups. */
+/** Open generator tasks for audit issue types (`technical_issue` + `audit|issueType`), keyed by issue type. */
+export async function getAuditIssueTaskIds(projectId: string, issueTypes: string[]): Promise<Record<string, string>> {
+  if (!issueTypes.length) return {};
+  const fps = new Map(issueTypes.map((t) => [taskFingerprint("technical_issue", ["audit", t]), t]));
+  const rows = await db
+    .select({ id: optimizeTasks.id, fingerprint: optimizeTasks.fingerprint })
+    .from(optimizeTasks)
+    .where(and(eq(optimizeTasks.projectId, projectId), inArray(optimizeTasks.fingerprint, [...fps.keys()]), inArray(optimizeTasks.status, ["open", "in_progress"])));
+  return Object.fromEntries(rows.map((r) => [fps.get(r.fingerprint)!, r.id]));
+}
+
 export async function listProjectMembers(projectId: string): Promise<Member[]> {
   const allowed = await listProjectAccessUsers(projectId);
   if (!allowed.length) return [];

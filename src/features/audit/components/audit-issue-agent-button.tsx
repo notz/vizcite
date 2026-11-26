@@ -10,6 +10,7 @@ type Props = {
   howToFix: string;
   count: number;
   urls: string[];
+  taskId?: string;
   className?: string;
 };
 
@@ -33,7 +34,7 @@ function auditIssueAgentPrompt(
           .map((u) => `- ${u}`)
           .join("\n")}`
       : "",
-    "Look at the affected pages in our connected CMS (list_cms_items / get_cms_item) and propose concrete edits with propose_cms_change where the CMS can fix this (titles, meta descriptions, headings, image alt texts, JSON-LD). Explain each change briefly. If it can't be fixed through the CMS (e.g. redirects, server errors, speed), explain what needs to change instead. Don't apply anything: I'll review the proposals under Content → Site edits.",
+    `Look at the affected pages in our connected CMS (list_cms_items / get_cms_item) and propose concrete edits with propose_cms_change${p.taskId ? ` and taskId ${p.taskId}` : ""} where the CMS can fix this (titles, meta descriptions, headings, image alt texts, JSON-LD). Explain each change briefly. If it can't be fixed through the CMS (e.g. redirects, server errors, speed), explain what needs to change instead. Don't apply anything: I'll review the proposals under Content → Site edits.`,
   ];
   const text = lines.filter(Boolean).join("\n\n");
   return text.length > 3500 ? `${text.slice(0, 3499)}…` : text;

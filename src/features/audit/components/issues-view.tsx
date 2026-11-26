@@ -30,12 +30,14 @@ export function IssuesView({
   summary,
   samples,
   predominantHost,
+  taskIds = {},
 }: {
   projectId: string;
   base: string;
   summary: IssueSummaryRow[];
   samples: Record<string, IssueSample[]>;
   predominantHost: string | null;
+  taskIds?: Record<string, string>;
 }) {
   const [severity, setSeverity] = useUrlState("severity", "all");
   const [category, setCategory] = useUrlState("category", "all");
@@ -207,6 +209,7 @@ export function IssuesView({
                                   howToFix={d?.howToFix ?? ""}
                                   count={row.count}
                                   urls={list.map((s) => s.pageUrl)}
+                                  taskId={taskIds[row.issueType]}
                                   className="h-7 gap-1"
                                 />
                                 <Button asChild variant="outline" size="sm" className="h-7 gap-1">
