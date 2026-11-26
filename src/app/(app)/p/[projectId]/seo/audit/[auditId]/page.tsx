@@ -3,6 +3,7 @@ import { SearchX } from "lucide-react";
 import { EmptyState } from "@/components/app/empty-state";
 import { PageContainer, TabNav } from "@/components/app/page";
 import { requireProject } from "@/server/auth/guards";
+import { getAuditIssueTaskIds } from "@/server/optimize/tasks/service";
 import {
   getAudit,
   getAuditHistory,
@@ -133,7 +134,8 @@ export default async function AuditDetailPage({ params, searchParams }: PageProp
     content = <PerformanceTable base={base} rows={overview.lighthouse.rows} predominantHost={overview.predominantHost} />;
   } else {
     const samples = await getIssueSamples(projectId, auditId, 20);
-    content = <IssuesView base={base} summary={overview.summary} samples={samples} predominantHost={overview.predominantHost} />;
+    const taskIds = await getAuditIssueTaskIds(projectId, overview.summary.map((r) => r.issueType));
+    content = <IssuesView projectId={projectId} base={base} summary={overview.summary} samples={samples} predominantHost={overview.predominantHost} taskIds={taskIds} />;
   }
 
   const banners = (

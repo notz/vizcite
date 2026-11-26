@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/app/empty-state";
 import { useUrlState } from "@/hooks/use-url-state";
 import { cn } from "@/lib/utils";
 import { getIssueDescriptor, ISSUE_CATEGORIES, type IssueCategory } from "../registry";
+import { AuditIssueAgentButton } from "./audit-issue-agent-button";
 import { formatDetails, pathOf, SEVERITY_META, SeverityDot, type Severity } from "./bits";
 
 export type IssueSummaryRow = { issueType: string; title: string; severity: Severity; category: IssueCategory; count: number; pages: number };
@@ -24,15 +25,19 @@ const SECTIONS: Array<{ key: Severity; label: string }> = [
 ];
 
 export function IssuesView({
+  projectId,
   base,
   summary,
   samples,
   predominantHost,
+  taskIds = {},
 }: {
+  projectId: string;
   base: string;
   summary: IssueSummaryRow[];
   samples: Record<string, IssueSample[]>;
   predominantHost: string | null;
+  taskIds?: Record<string, string>;
 }) {
   const [severity, setSeverity] = useUrlState("severity", "all");
   const [category, setCategory] = useUrlState("category", "all");
@@ -195,6 +200,17 @@ export function IssuesView({
                                   title={`Site audit — ${row.title} — ${new Date().toISOString().slice(0, 10)}`}
                                   csvHref={`${base}/export?kind=issues&format=csv&issueType=${row.issueType}`}
                                   getData={() => fetchCsvTable(`${base}/export?kind=issues&format=csv&issueType=${row.issueType}`)}
+                                />
+                                <AuditIssueAgentButton
+                                  projectId={projectId}
+                                  title={row.title}
+                                  severity={row.severity}
+                                  explanation={d?.explanation ?? ""}
+                                  howToFix={d?.howToFix ?? ""}
+                                  count={row.count}
+                                  urls={list.map((s) => s.pageUrl)}
+                                  taskId={taskIds[row.issueType]}
+                                  className="h-7 gap-1"
                                 />
                                 <Button asChild variant="outline" size="sm" className="h-7 gap-1">
                                   <Link href={`${base}/issues/${row.issueType}`}>
