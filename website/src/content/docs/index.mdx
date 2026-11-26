@@ -1,0 +1,46 @@
+---
+title: Vizcite
+description: The open-source AI SEO & GEO platform. Self-host it for free.
+template: splash
+hero:
+  tagline: See how ChatGPT, Perplexity, Gemini, Claude and Google AI Overviews talk about your brand, then fix it. Next to a full SEO suite. MIT licensed, one command to self-host.
+  image:
+    file: ../../assets/dashboard.png
+    alt: Vizcite dashboard with AI visibility, mention rate, citation rate and share of voice
+  actions:
+    - text: Self-host in 5 minutes
+      link: /self-hosting/
+      icon: right-arrow
+    - text: Star on GitHub
+      link: https://github.com/notz/vizcite
+      variant: minimal
+---
+
+import { Card, CardGrid, Tabs, TabItem } from "@astrojs/starlight/components";
+
+## Install
+
+<Tabs>
+  <TabItem label="One-liner">
+```bash
+curl -fsSL https://raw.githubusercontent.com/notz/main/deploy/install.sh | bash
+```
+  </TabItem>
+  <TabItem label="Docker Compose">
+```bash
+docker pull ghcr.io/notz/vizcite
+```
+Compose files and `.env` live in [`deploy/`](https://github.com/notz/tree/main/deploy).
+  </TabItem>
+</Tabs>
+
+## Built for developers
+
+<CardGrid>
+  <Card title="AI visibility + classic SEO" icon="magnifier">Tracker, competitors, sources, sentiment, keywords, rank tracking, site audits, reports.</Card>
+  <Card title="Your data, your server" icon="seti:docker">PostgreSQL + one container. MIT licensed, every feature included.</Card>
+  <Card title="Bring your own AI" icon="rocket">Runs on your local Claude Code / Codex via a lightweight agent, API keys as fallback.</Card>
+  <Card title="REST, MCP, webhooks" icon="puzzle">REST v1 (OpenAPI), MCP server with 100+ tools, signed webhooks, OAuth 2.1.</Card>
+</CardGrid>
+
+Pages: [Self-hosting](/self-hosting/) · [Integrations](/integrations/) · [Changelog](/changelog/) · [Contributing](/contributing/)

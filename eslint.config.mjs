@@ -19,6 +19,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "data/**",
     "agent/**",
+    "website/**",
     // Local agent/tooling state (gitignored).
     ".omc/**",
   ]),
