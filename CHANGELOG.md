@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.1](https://github.com/notz/vizcite/compare/v0.4.0...v0.4.1) (2026-11-27)
+
+
+### Bug Fixes
+
+* **website:** serve installer at vizcite.com/install.sh and fix broken links ([cf41fcd](https://github.com/notz/vizcite/commit/cf41fcd04c48764a172fdbac525dd489d5df3a2d))
+
+
+### Documentation
+
+* website and readme integrations ([#22](https://github.com/notz/vizcite/issues/22)) ([ce28ead](https://github.com/notz/vizcite/commit/ce28ead472ceeb053d8273a3f91e2c7b34c9215a))
+
 ## [0.4.0](https://github.com/notz/vizcite/compare/v0.3.0...v0.4.0) (2026-11-26)
 
 
