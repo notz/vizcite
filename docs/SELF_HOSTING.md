@@ -22,7 +22,7 @@ Pick one of three ways to run it:
 ## 1. One-line installer
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/notz/vizcite/main/deploy/install.sh | bash
+curl -fsSL https://vizcite.com/install.sh | bash
 ```
 
 This downloads `deploy/docker-compose.yml` and `deploy/Caddyfile` from this repository into `/opt/vizcite`
@@ -33,12 +33,12 @@ Caddy is included by default and gets you automatic HTTPS for your domain with n
 Useful flags:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/notz/vizcite/main/deploy/install.sh | bash -s -- --domain seo.example.com --yes
-curl -fsSL https://raw.githubusercontent.com/notz/vizcite/main/deploy/install.sh | bash -s -- --no-proxy        # skip Caddy, see below
-curl -fsSL https://raw.githubusercontent.com/notz/vizcite/main/deploy/install.sh | bash -s -- --version v1.4.0  # pin an image tag
+curl -fsSL https://vizcite.com/install.sh | bash -s -- --domain seo.example.com --yes
+curl -fsSL https://vizcite.com/install.sh | bash -s -- --no-proxy        # skip Caddy, see below
+curl -fsSL https://vizcite.com/install.sh | bash -s -- --version v1.4.0  # pin an image tag
 ```
 
-Run `curl -fsSL https://raw.githubusercontent.com/notz/vizcite/main/deploy/install.sh | bash -s -- --help` for the full list (`--dir`, `--update`,
+Run `curl -fsSL https://vizcite.com/install.sh | bash -s -- --help` for the full list (`--dir`, `--update`,
 `--uninstall`, `--purge`). The script is idempotent — re-running it keeps your existing `.env`.
 
 Already have a reverse proxy (Traefik, nginx, Cloudflare Tunnel, …)? Use `--no-proxy`: the bundled Caddy
@@ -258,7 +258,7 @@ compose/deployment.
 
 ## Updating
 
-- **Installer**: `curl -fsSL https://raw.githubusercontent.com/notz/vizcite/main/deploy/install.sh | bash -s -- --update` (pulls the latest image
+- **Installer**: `curl -fsSL https://vizcite.com/install.sh | bash -s -- --update` (pulls the latest image
   and recreates containers).
 - **Manual Compose**: `docker compose pull && docker compose up -d` in your install directory.
 - **Build from source**: `git pull && docker compose up -d --build`.
