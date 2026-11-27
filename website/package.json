@@ -1,0 +1,20 @@
+{
+  "name": "vizcite-website",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync": "node scripts/sync-docs.mjs",
+    "dev": "pnpm sync && astro dev",
+    "build": "pnpm sync && astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.36.0",
+    "astro": "^5.14.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "nanoid": "3.3.11"
+    }
+  }
+}

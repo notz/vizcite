@@ -149,9 +149,9 @@ for requirements, updates, backups and reverse-proxy setups.
 | AI Visibility | Prompt research, tracker (trends, breakdown, prompt flow, locations, AI Overviews vs AI Mode, model versions, multi-market prompts), query fan-outs with intent, coverage and follow-up questions, competitors (tracked set or all brands, #1/top-3 share, head-to-head), sentiment with an 11-aspect scorecard, sources, products with catalog coverage and feed health, ads, brand lookup, prompt explorer, alerts, model settings, free AI visibility check |
 | AI engines | ChatGPT (API and app), Perplexity, Gemini, Claude, Google AI Overviews, Google AI Mode, Microsoft Copilot, Grok, Mistral, DeepSeek, Meta AI, Qwen, Kimi, Sabiá, Solar, each via DataForSEO, the vendor API or your local agent; engines without a configured provider can be simulated by an AI model with web search (clearly labelled) |
 | SEO | Keyword research, saved keywords, rank tracking, domain overview, backlinks, site audit (issues, pages, Lighthouse, compare), local SEO, free SEO tools, export to CSV / Google Sheets. Data comes from your own DataForSEO account, or from labelled AI estimates when none is connected |
-| Analytics | Human traffic (GA4 & others), bot traffic (log uploads, CDN connectors, server-log webhook), Search Console (performance, opportunities, URL inspection) |
-| Attribution | 7-step setup, snippet + webhooks, channel & revenue attribution, hidden AI revenue and response-rate insights |
-| Optimizations | Tasks (push to Jira/Linear/… with routing rules and outcome tracking), content grounded in your own knowledge (Notion, Google Drive, Slack, uploads, URLs) with claim checks, JSON-LD schema generator, CMS site edits with approval and undo (WordPress, Shopify, Webflow, Kirby incl. block text per language), crawlability, fact check with rules |
+| Analytics | Human traffic (GA4, Matomo, Piwik PRO, Umami), bot traffic (log uploads, Cloudflare / Akamai / Fastly / CloudFront connectors, server-log webhook), Search Console (performance, opportunities, URL inspection) |
+| Attribution | 7-step setup, snippet + webhooks (Shopify, Stripe, HubSpot, Typeform and 25+ more, see [Integrations](#integrations)), channel & revenue attribution, hidden AI revenue and response-rate insights |
+| Optimizations | Tasks (push to Jira, Linear, Asana, ClickUp, Trello, monday.com, Notion, awork with routing rules and outcome tracking), content grounded in your own knowledge (Notion, Google Drive, Slack, uploads, URLs) with claim checks, JSON-LD schema generator, CMS site edits with approval and undo (WordPress, Shopify, Webflow, Framer, Kirby incl. block text per language), crawlability, fact check with rules |
 | Reports | Drag & drop report builder, 11 templates, brand kits, PPTX/PDF export, password-protected share links, scheduled email delivery, AI crawler / attribution / AI visitor blocks, AI HTML reports, agency portfolio overview |
 | Agent mode | Chat with your data through your own Claude Code / Codex (with every Vizcite tool) or the API fallback |
 | API | REST v1 (OpenAPI), MCP server (100+ tools), OAuth 2.1 incl. client ID metadata documents, API keys with `read` / `write` / `spend` / `export` scopes, signed outbound webhooks (Zapier, Make, n8n), Looker Studio connector, 17 agent skills, Claude Code / Codex / Cursor plugins |
@@ -161,6 +161,23 @@ for requirements, updates, backups and reverse-proxy setups.
 **Stack:** Next.js 16 · React 19 · Tailwind v4 · shadcn/ui · PostgreSQL 17 · Drizzle. One `DOMAIN` variable;
 everything else (email via SMTP / Amazon SES, AI providers, DataForSEO, Google OAuth, onboarding, branding, roles,
 limits, security) is configured in the **admin panel**.
+
+## Integrations
+
+| Category | Integrations |
+|---|---|
+| Task & project management | Jira, Linear, Asana, ClickUp, Trello, monday.com, Notion, awork, generic webhook |
+| CMS site edits (approval + undo) | WordPress, Webflow, Shopify, Framer, Kirby (incl. block text per language) |
+| Web analytics | Google Analytics 4, Matomo, Piwik PRO, Umami |
+| Search | Google Search Console, Bing Webmaster Tools, Google Sheets export |
+| AI bot traffic | Cloudflare (one-click Worker), Akamai, Fastly, AWS CloudFront, server logs / API, log upload (nginx, Apache, Cloudflare Logpush, Akamai DataStream 2, IIS/W3C, NDJSON) |
+| Attribution sources | Shopify, WooCommerce, Shopware 6, Stripe · Fairing, KnoCommerce, Zigpoll, SurveyMonkey · Typeform, Tally, Jotform, Gravity Forms, Formstack · HubSpot, Salesforce, Pipedrive, Attio, Close · Calendly, Intercom · Zapier / Make, n8n, custom webhook, CSV import |
+| Knowledge sources | Notion, Google Drive, Slack, file uploads, URLs and sitemaps |
+| Data & AI providers | DataForSEO, Google PageSpeed, Anthropic, OpenAI, OpenRouter, Perplexity, Gemini, xAI, Mistral, DeepSeek, Meta, Qwen, Moonshot (Kimi), Maritaca (Sabiá), Upstage (Solar), local Claude Code / Codex agents |
+| Reporting & developer | REST API, MCP server, signed outbound webhooks, Looker Studio connector, Claude Code / Codex / Cursor plugins |
+| Auth & email | OIDC single sign-on (Entra ID, Okta, Google Workspace, Keycloak, …), SMTP, Amazon SES |
+
+Missing one? Integrations are small, self-contained providers, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## First run
 
