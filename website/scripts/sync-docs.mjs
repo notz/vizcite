@@ -1,10 +1,13 @@
 // Builds docs pages from the repo's own markdown so the site never drifts from README/docs.
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const root = new URL("../../", import.meta.url);
 const out = new URL("../src/content/docs/", import.meta.url);
 const GH = "https://github.com/notz/vizcite/blob/main/";
 mkdirSync(out, { recursive: true });
+
+// Serve the installer at vizcite.com/install.sh without keeping a second copy.
+copyFileSync(new URL("deploy/install.sh", root), new URL("../public/install.sh", import.meta.url));
 
 const read = (p) => readFileSync(new URL(p, root), "utf8");
 // Relative repo links (../README.md#x, docs/X.md, CONTRIBUTING.md) become GitHub links.
