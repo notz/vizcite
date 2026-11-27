@@ -11,10 +11,5 @@
   "dependencies": {
     "@astrojs/starlight": "^0.36.0",
     "astro": "^5.14.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "nanoid": "3.3.11"
-    }
   }
 }

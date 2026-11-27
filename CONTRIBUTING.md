@@ -15,7 +15,7 @@ making it better — bug fixes, new features, docs, or just filing a good issue 
 
 ## Development setup
 
-Requirements: Node 24, [pnpm 9.15](https://pnpm.io/installation) (`corepack enable` picks it up automatically
+Requirements: Node 24, [pnpm 12](https://pnpm.io/installation) (`corepack enable` picks it up automatically
 from `packageManager` in `package.json`), and Docker (for local Postgres).
 
 ```bash
